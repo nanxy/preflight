@@ -1,8 +1,6 @@
 // components/PriorityScore.jsx
-// Always-visible score: number on top, 4-segment proportional bar below.
-// Number color saturates with score value. Hover the bar to see component labels.
-
 import { priorityBreakdown, priorityColor } from '../lib/priority.js';
+import { FlowOne, FlowTwo } from './Icons.jsx';
 
 const SEG = {
   startability: '#7F77DD',
@@ -30,7 +28,7 @@ export default function PriorityScore({ task, size = 'md' }) {
   ].filter(Boolean).join(' · ');
 
   return (
-    <div className="flex flex-col items-end gap-1 cursor-help" title={tip}>
+    <div className="flex flex-col items-end gap-1 cursor-help shrink-0" title={tip}>
       <span className={`${numCls} font-semibold leading-none tabular-nums`} style={{ color }}>
         {b.total}
       </span>
@@ -41,7 +39,7 @@ export default function PriorityScore({ task, size = 'md' }) {
           {wUrg   > 0 && <div style={{ width: `${wUrg}%`,   background: SEG.urgency }} />}
         </div>
         {b.routineAdj < 0 && (
-          <span className="text-[10px] text-gray-400 font-medium" title={`routine ${b.routineAdj}`}>⌄</span>
+          <span className="text-[10px] text-gray-400" title={`routine ${b.routineAdj}`}>⌄</span>
         )}
       </div>
     </div>

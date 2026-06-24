@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root { color-scheme: light dark; }
+html[data-theme="light"] { color-scheme: light; }
+html[data-theme="dark"]  { color-scheme: dark; }
 
 html, body, #root { height: 100%; }
 
@@ -12,14 +14,25 @@ body {
   background: #FBFAF7;
   color: #2C2C2A;
   -webkit-font-smoothing: antialiased;
+  /* prevent iOS rubber-band scroll bleeding into drag gestures */
+  overscroll-behavior-y: contain;
 }
 
+/* dark mode: either OS pref (no override) OR explicit data-theme="dark" */
 @media (prefers-color-scheme: dark) {
-  body { background: #1B1B1A; color: #F1EFE8; }
+  html:not([data-theme="light"]) body { background: #1B1B1A; color: #F1EFE8; }
 }
+html[data-theme="dark"] body { background: #1B1B1A; color: #F1EFE8; }
 
 .no-select {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
+
+/* hide scrollbar on sort chips row */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* disable touch scrolling on draggable cards so dnd-kit owns the gesture */
+.dnd-draggable { touch-action: none; }

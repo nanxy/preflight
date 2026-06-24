@@ -1,30 +1,19 @@
 // components/EditModal.jsx
-// Reuses TaskForm for editing an existing task. Extra archive/delete actions
-// route through ConfirmModal so destructive ops require an explicit yes.
-
 import { useState } from 'react';
 import Modal from './Modal.jsx';
 import TaskForm from './TaskForm.jsx';
 import ConfirmModal from './ConfirmModal.jsx';
 
 export default function EditModal({
-  open,
-  task,
-  categories,
-  onSave,
-  onArchive,
-  onDelete,
-  onClose,
+  open, task, categories,
+  onSave, onArchive, onDelete, onClose, onCategoriesChanged,
 }) {
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [confirmDelete, setConfirmDelete]   = useState(false);
 
   if (!task) return null;
 
-  function handleSubmit(patch) {
-    onSave(task.id, patch);
-    onClose();
-  }
+  function handleSubmit(patch) { onSave(task.id, patch); onClose(); }
 
   return (
     <>
@@ -39,20 +28,19 @@ export default function EditModal({
           submitLabel="save"
           onSubmit={handleSubmit}
           onCancel={onClose}
+          onCategoriesChanged={onCategoriesChanged}
           extraActions={
             <>
-              <button
-                onClick={() => setConfirmArchive(true)}
-                className="text-xs px-3 py-1.5 rounded-full border border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-600"
-              >
-                archive
-              </button>
+              {task.status !== 'archived' && (
+                <button
+                  onClick={() => setConfirmArchive(true)}
+                  className="text-xs px-3 py-1.5 rounded-full border border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-600"
+                >archive</button>
+              )}
               <button
                 onClick={() => setConfirmDelete(true)}
                 className="text-xs px-3 py-1.5 rounded-full border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
-              >
-                delete
-              </button>
+              >delete</button>
             </>
           }
         />

@@ -1,6 +1,4 @@
 // data/defaults.js
-// Default categories shipped with the app. User can rename, recolor, archive,
-// or add their own. Category colors become the visual theme of every task.
 
 export const DEFAULT_CATEGORIES = [
   { id: 'cat_career',    label: 'career',    color: 'blue',  isArchived: false, isDefault: true, sortOrder: 0 },
@@ -19,14 +17,24 @@ export const DEFAULT_PREFERENCES = {
 };
 
 export const TIME_BUCKETS = [
-  { id: 'lt15',   label: '< 15 min',    short: '<15m',  minutes: 15  },
-  { id: '15_45',  label: '15 – 45 min', short: '15–45m', minutes: 30  },
-  { id: '45_2h',  label: '45m – 2h',    short: '45m–2h', minutes: 75  },
-  { id: '2hplus', label: '2h+',         short: '2h+',   minutes: 150 },
+  { id: 'lt15',   label: '< 15 min',    short: '<15m',   minutes: 15,  cardScale: 0 },
+  { id: '15_45',  label: '15 – 45 min', short: '15–45m', minutes: 30,  cardScale: 1 },
+  { id: '45_2h',  label: '45m – 2h',    short: '45m–2h', minutes: 75,  cardScale: 2 },
+  { id: '2hplus', label: '2h+',         short: '2h+',    minutes: 150, cardScale: 3 },
 ];
 
-// Each color has a 5-stop ramp used by category-themed cards.
-// 50/100 = card background tints, 400/600 = borders/accents, 800 = ink-on-light.
+// Card vertical padding scales with task length. Longer task = visually heavier.
+export const CARD_PADDING_BY_SCALE = ['py-2.5', 'py-3.5', 'py-5', 'py-7'];
+
+// Slider symbol bounds for enjoyment & friction. Middle = neutral, no symbol.
+export const SLIDER_SYMBOLS = {
+  enjoyment: { low: '😩', high: '🤩', lowLabel: 'dread', highLabel: 'love' },
+  friction:  { low: '🪶', high: '🧱', lowLabel: 'easy',  highLabel: 'hard' },
+};
+
+// Color palette available to user-created categories.
+export const AVAILABLE_COLORS = ['blue', 'pink', 'coral', 'amber', 'green', 'teal', 'purple', 'gray'];
+
 export const CATEGORY_COLOR_STOPS = {
   blue:   { 50: '#EAF3FC', 100: '#B5D4F4', 400: '#3E84CC', 600: '#185FA5', 800: '#0C447C' },
   pink:   { 50: '#FBEEF3', 100: '#F4C0D1', 400: '#D86B8E', 600: '#993556', 800: '#72243E' },

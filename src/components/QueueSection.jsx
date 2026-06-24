@@ -1,59 +1,29 @@
 // components/QueueSection.jsx
-// The bottom region — was "Backlog." Shows everything not yet committed.
-// When sort=category, renders as grouped buckets (CategoryGroup). Otherwise
-// renders as a flat list.
-//
-// Doubles as a drop target: when a card comes in from Today (source='today'),
-// drop here = dequeue (drag back out).
+// Bottom region. Draggable cards (not sortable — their order comes from
+// SortChips). Doubles as a drop target so Today cards can drag back out.
 
-import { useState } from 'react';
-import TaskCard from './TaskCard.jsx';
+import { useDroppable } from '@dnd-kit/core';
+import DraggableTaskCard from './DraggableTaskCard.jsx';
 import CategoryGroup from './CategoryGroup.jsx';
 
 export default function QueueSection({
   tasks,
-  grouped,            // null if flat, or array of { categoryId, tasks }
+  grouped,
   categoriesById,
   onEnqueue,
   onComplete,
   onEdit,
   onArchive,
-  onDragOutOfToday,   // called when a card from Today is dropped here
 }) {
-  const [hover, setHover] = useState(false);
-
-  function onDragOver(e) {
-    e.preventDefault();
-    try {
-      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-      if (data?.source === 'today') setHover(true);
-    } catch {
-      setHover(true);
-    }
-  }
-  function onDragLeave() { setHover(false); }
-  function onDrop(e) {
-    e.preventDefault();
-    setHover(false);
-    try {
-      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-      if (data?.source === 'today' && data.taskId) {
-        onDragOutOfToday(data.taskId);
-      }
-    } catch {}
-  }
-
+  const { setNodeRef, isOver } = useDroppable({ id: 'zone-queue' });
   const empty = tasks.length === 0;
 
   return (
     <section
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
+      ref={setNodeRef}
       className={[
-        'rounded-2xl transition-colors',
-        hover ? 'bg-priority-50/30 ring-2 ring-priority-200' : '',
-        'p-1',
+        'rounded-2xl transition-colors p-1',
+        isOver ? 'bg-priority-50/30 ring-2 ring-priority-200' : '',
       ].join(' ')}
     >
       <div className="flex items-baseline justify-between mb-3 px-2">
@@ -86,7 +56,7 @@ export default function QueueSection({
         <ul className="space-y-2 px-1">
           {tasks.map(task => (
             <li key={task.id}>
-              <TaskCard
+              <DraggableTaskCard
                 task={task}
                 category={categoriesById[task.categoryId]}
                 source="queue"

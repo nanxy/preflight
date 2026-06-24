@@ -1,9 +1,9 @@
 // components/ScoreInputs.jsx
 // Always-visible readout of every priority component on a card.
-// Compact icon + value chips: enjoyment, friction, time, due, flow, routine.
 
 import { TIME_BUCKETS } from '../data/defaults.js';
 import { daysUntil } from '../lib/priority.js';
+import { FlowOne, FlowTwo } from './Icons.jsx';
 
 const TIME_SHORT = Object.fromEntries(TIME_BUCKETS.map(b => [b.id, b.short]));
 
@@ -30,39 +30,31 @@ export default function ScoreInputs({ task }) {
   return (
     <div className="flex items-center gap-2.5 text-[11px] text-gray-500 dark:text-gray-400 flex-wrap">
       <Item label="enjoy" value={`${task.enjoyment ?? 3}/5`} />
-      <span className="text-gray-300">·</span>
+      <Dot />
       <Item label="friction" value={`${task.friction ?? 3}/5`} />
-      <span className="text-gray-300">·</span>
+      <Dot />
       <Item label="time" value={TIME_SHORT[task.timeBucket] ?? '?'} />
-      {due && (
-        <>
-          <span className="text-gray-300">·</span>
-          <Item label="due" value={due} valueCls={dueClass(task.dueDate)} />
-        </>
-      )}
+      {due && (<><Dot /><Item label="due" value={due} valueCls={dueClass(task.dueDate)} /></>)}
       {task.flow > 0 && (
         <>
-          <span className="text-gray-300">·</span>
-          <span className="font-bold text-priority-600">{task.flow === 2 ? '>>' : '>'}</span>
+          <Dot />
+          <span className="text-priority-600" title={task.flow === 2 ? 'unlocks a lot' : 'unlocks something'}>
+            {task.flow === 2 ? <FlowTwo /> : <FlowOne />}
+          </span>
         </>
       )}
-      {task.isRoutine && (
-        <>
-          <span className="text-gray-300">·</span>
-          <span title="routine" className="text-gray-400">↻</span>
-        </>
-      )}
+      {task.isRoutine && (<><Dot /><span title="routine" className="text-gray-400">↻</span></>)}
     </div>
   );
 }
+
+const Dot = () => <span className="text-gray-300">·</span>;
 
 function Item({ label, value, valueCls = '' }) {
   return (
     <span className="inline-flex items-baseline gap-1">
       <span className="text-gray-400">{label}</span>
-      <span className={`tabular-nums font-medium ${valueCls || 'text-gray-700 dark:text-gray-300'}`}>
-        {value}
-      </span>
+      <span className={`tabular-nums font-medium ${valueCls || 'text-gray-700 dark:text-gray-300'}`}>{value}</span>
     </span>
   );
 }

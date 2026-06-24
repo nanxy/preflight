@@ -1,61 +1,60 @@
 // components/TaskCard.jsx
-// Category-themed card. Always shows: category chip, title, ALL priority
-// components (enjoyment, friction, time, due, flow, routine), and the score
-// with breakdown bar. Hover/tap expands to reveal action buttons.
+// Category-themed card. Height scales with time bucket. Always shows all
+// priority components. Hover/tap expands to reveal action buttons.
 //
-// Drag behavior: card is HTML-draggable. Source is encoded in dataTransfer:
-//   'queue' if the card is currently in Today, 'queue' otherwise.
-// Today zone catches 'queue' drops; Queue (backlog) zone catches 'today' drops
-// for dragging back out.
+// Card is "pure" — receives drag attributes from a wrapper (Sortable in
+// Today, Draggable in Queue) so it doesn't depend on dnd-kit directly.
 
 import { useState } from 'react';
-import { CATEGORY_COLOR_STOPS } from '../data/defaults.js';
+import { CATEGORY_COLOR_STOPS, CARD_PADDING_BY_SCALE, TIME_BUCKETS } from '../data/defaults.js';
 import CategoryChip from './CategoryChip.jsx';
 import PriorityScore from './PriorityScore.jsx';
 import ScoreInputs from './ScoreInputs.jsx';
 
+const SCALE_BY_BUCKET = Object.fromEntries(TIME_BUCKETS.map(b => [b.id, b.cardScale]));
+
 export default function TaskCard({
   task,
   category,
-  source = 'queue', // 'queue' | 'today'
+  source = 'queue',          // 'queue' | 'today' | 'archived'
   isFirstInToday = false,
+  dragHandleProps = {},      // {...attributes, ...listeners} from dnd-kit
+  isDragging = false,
   onEnqueue,
   onDequeue,
   onComplete,
   onEdit,
   onArchive,
+  onUnarchive,
   onStart,
 }) {
   const [expanded, setExpanded] = useState(false);
   const stops = CATEGORY_COLOR_STOPS[category?.color ?? 'gray'];
+  const scale = SCALE_BY_BUCKET[task.timeBucket] ?? 1;
+  const padCls = CARD_PADDING_BY_SCALE[scale] ?? CARD_PADDING_BY_SCALE[1];
 
-  // Soft tinted background + accent border-left for category theming.
   const cardStyle = {
     background: stops[50],
     borderLeftColor: stops[400],
   };
 
-  function handleDragStart(e) {
-    e.dataTransfer.setData('text/plain', JSON.stringify({ taskId: task.id, source }));
-    e.dataTransfer.effectAllowed = 'move';
-  }
-
   const stopAnd = (fn) => (e) => { e.stopPropagation(); fn?.(task.id); };
+  const stopAndPass = (fn) => (e) => { e.stopPropagation(); fn?.(task); };
 
   return (
     <div
-      draggable
-      onDragStart={handleDragStart}
+      {...dragHandleProps}
       onClick={() => setExpanded(v => !v)}
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
       style={cardStyle}
       className={[
-        'group rounded-xl border border-l-4 transition-all duration-150 no-select cursor-grab active:cursor-grabbing',
+        'dnd-draggable group rounded-xl border border-l-4 transition-all duration-150 no-select cursor-grab active:cursor-grabbing px-4',
+        padCls,
         'border-gray-200/60 dark:border-gray-700',
         'hover:shadow-md hover:-translate-y-0.5',
         isFirstInToday ? 'ring-2 ring-priority-300' : '',
-        'px-4 py-3',
+        isDragging ? 'opacity-40 ring-2 ring-priority-400' : '',
       ].join(' ')}
     >
       <div className="flex items-start gap-3">
@@ -77,7 +76,7 @@ export default function TaskCard({
       </div>
 
       {expanded && (
-        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200/50">
+        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200/50 flex-wrap">
           {source === 'queue' && onEnqueue && (
             <ActionBtn onClick={stopAnd(onEnqueue)} accent stops={stops}>+ today</ActionBtn>
           )}
@@ -87,13 +86,16 @@ export default function TaskCard({
           {source === 'today' && onDequeue && (
             <ActionBtn onClick={stopAnd(onDequeue)} stops={stops}>↩ remove</ActionBtn>
           )}
-          {onComplete && (
+          {source === 'archived' && onUnarchive && (
+            <ActionBtn onClick={stopAnd(onUnarchive)} accent stops={stops}>↺ restore</ActionBtn>
+          )}
+          {source !== 'archived' && onComplete && (
             <ActionBtn onClick={stopAnd(onComplete)} stops={stops}>✓ done</ActionBtn>
           )}
           {onEdit && (
-            <ActionBtn onClick={(e) => { e.stopPropagation(); onEdit(task); }} stops={stops}>edit</ActionBtn>
+            <ActionBtn onClick={stopAndPass(onEdit)} stops={stops}>edit</ActionBtn>
           )}
-          {onArchive && (
+          {source !== 'archived' && onArchive && (
             <ActionBtn onClick={stopAnd(onArchive)} stops={stops}>archive</ActionBtn>
           )}
         </div>
@@ -106,6 +108,7 @@ function ActionBtn({ onClick, accent = false, stops, children }) {
   if (accent) {
     return (
       <button
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={onClick}
         className="text-xs px-3 py-1.5 rounded-full font-semibold transition-colors text-white hover:opacity-90"
         style={{ background: stops[600] }}
@@ -116,8 +119,9 @@ function ActionBtn({ onClick, accent = false, stops, children }) {
   }
   return (
     <button
+      onPointerDown={(e) => e.stopPropagation()}
       onClick={onClick}
-      className="text-xs px-3 py-1.5 rounded-full border bg-white/50 hover:bg-white transition-colors"
+      className="text-xs px-3 py-1.5 rounded-full border bg-white/60 hover:bg-white transition-colors"
       style={{ borderColor: stops[100], color: stops[800] }}
     >
       {children}

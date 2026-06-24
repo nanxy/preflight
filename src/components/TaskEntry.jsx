@@ -1,15 +1,10 @@
 // components/TaskEntry.jsx
-// Floating + button → bucket picker → form modal (reusing TaskForm).
-// Desktop: hover the + to reveal the vertical bucket stack.
-// Mobile: tap to toggle the stack.
-// PLACEHOLDER: mobile radial fan + long-press-to-reposition still pending.
-
 import { useState, useRef, useEffect } from 'react';
 import Modal from './Modal.jsx';
 import TaskForm from './TaskForm.jsx';
 import { TIME_BUCKETS } from '../data/defaults.js';
 
-export default function TaskEntry({ corner = 'bottom-right', categories, onCreate }) {
+export default function TaskEntry({ corner = 'bottom-right', categories, onCreate, onCategoriesChanged }) {
   const [bucketsOpen, setBucketsOpen] = useState(false);
   const [formBucket, setFormBucket]   = useState(null);
   const wrapRef = useRef(null);
@@ -29,15 +24,8 @@ export default function TaskEntry({ corner = 'bottom-right', categories, onCreat
     'top-left':     'top-6 left-6',
   };
 
-  function pickBucket(id) {
-    setBucketsOpen(false);
-    setFormBucket(id);
-  }
-
-  function handleCreate(data) {
-    onCreate(data);
-    setFormBucket(null);
-  }
+  function pickBucket(id) { setBucketsOpen(false); setFormBucket(id); }
+  function handleCreate(data) { onCreate(data); setFormBucket(null); }
 
   return (
     <>
@@ -70,17 +58,13 @@ export default function TaskEntry({ corner = 'bottom-right', categories, onCreat
           onClick={() => setBucketsOpen(o => !o)}
           className="w-14 h-14 rounded-full bg-priority-600 hover:bg-priority-800 text-white text-2xl font-light shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 no-select"
           aria-label="Add task"
-        >
-          +
-        </button>
+        >+</button>
       </div>
 
       <Modal open={!!formBucket} onClose={() => setFormBucket(null)}>
         <div className="flex items-baseline justify-between mb-4">
           <h3 className="text-lg font-semibold">New task</h3>
-          <span className="text-sm text-gray-500">
-            {TIME_BUCKETS.find(b => b.id === formBucket)?.label}
-          </span>
+          <span className="text-sm text-gray-500">{TIME_BUCKETS.find(b => b.id === formBucket)?.label}</span>
         </div>
         {formBucket && (
           <TaskForm
@@ -89,6 +73,7 @@ export default function TaskEntry({ corner = 'bottom-right', categories, onCreat
             submitLabel="add task"
             onSubmit={handleCreate}
             onCancel={() => setFormBucket(null)}
+            onCategoriesChanged={onCategoriesChanged}
           />
         )}
       </Modal>
