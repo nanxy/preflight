@@ -1,13 +1,11 @@
 // lib/priority.js
-// Priority score formula + visual helpers. Bias: what Pauline will actually
-// START, not what is objectively most urgent.
+// Priority score, EXP (forward-compat for After), and due-date framing helpers.
 
-const TIME_BOOST = {
-  lt15:    15,
-  '15_45': 10,
-  '45_2h': 5,
-  '2hplus': 0,
-};
+const TIME_BOOST = { lt15: 15, '15_45': 10, '45_2h': 5, '2hplus': 0 };
+
+// EXP scales reward by effort (friction + time), discounts routine work.
+// Range roughly 8–140. Stored nowhere — derived from task fields on display.
+const TIME_XP = { lt15: 10, '15_45': 25, '45_2h': 50, '2hplus': 100 };
 
 export function daysUntil(dueDate, now = new Date()) {
   if (!dueDate) return null;
@@ -27,10 +25,6 @@ function urgencyScore(dueDate, now) {
   return 5;
 }
 
-/**
- * Returns the raw components that make up the score. The UI uses this for
- * the always-visible segmented breakdown and the per-component readouts.
- */
 export function priorityBreakdown(task, now = new Date()) {
   const enjoyment = task.enjoyment ?? 3;
   const friction  = task.friction  ?? 3;
@@ -46,6 +40,13 @@ export function priorityBreakdown(task, now = new Date()) {
 
 export function priorityScore(task, now = new Date()) {
   return priorityBreakdown(task, now).total;
+}
+
+export function exp(task) {
+  const friction = task.friction ?? 3;
+  const timeXP   = TIME_XP[task.timeBucket] ?? 0;
+  const routine  = task.isRoutine ? -10 : 0;
+  return Math.max(5, friction * 8 + timeXP + routine);
 }
 
 export function saturationFor(score) {
@@ -64,9 +65,7 @@ export function priorityColor(score) {
   let lo = stops[0], hi = stops[stops.length - 1];
   for (let i = 0; i < stops.length - 1; i++) {
     if (s >= stops[i].at && s <= stops[i + 1].at) {
-      lo = stops[i];
-      hi = stops[i + 1];
-      break;
+      lo = stops[i]; hi = stops[i + 1]; break;
     }
   }
   const span = hi.at - lo.at || 1;
@@ -83,4 +82,31 @@ function mixHex(a, b, t) {
   const g = Math.round(ag + (bg - ag) * t);
   const bl = Math.round(ab + (bb - ab) * t);
   return '#' + [r, g, bl].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * ADHD-friendly due-date framing.
+ * Returns { bucket, exact, urgency } where:
+ *   - bucket: "overdue" | "today" | "tomorrow" | "this week" | "next week" | "this month" | "later"
+ *   - exact:  precise "5d" or "Aug 12" — shown on hover
+ *   - urgency: "high" | "medium" | "low" | "none"
+ */
+export function dueFraming(dueDate, now = new Date()) {
+  if (!dueDate) return { bucket: null, exact: null, urgency: 'none' };
+  const d = daysUntil(dueDate, now);
+  let bucket, urgency;
+  if (d < 0)        { bucket = 'overdue';    urgency = 'high';   }
+  else if (d === 0) { bucket = 'today';      urgency = 'high';   }
+  else if (d === 1) { bucket = 'tomorrow';   urgency = 'high';   }
+  else if (d <= 6)  { bucket = 'this week';  urgency = 'medium'; }
+  else if (d <= 13) { bucket = 'next week';  urgency = 'low';    }
+  else if (d <= 30) { bucket = 'this month'; urgency = 'low';    }
+  else              { bucket = 'later';      urgency = 'none';   }
+
+  let exact;
+  if (d < 0)       exact = `${Math.abs(d)} d overdue`;
+  else if (d <= 14) exact = `${d} d`;
+  else              exact = new Date(dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+  return { bucket, exact, urgency };
 }

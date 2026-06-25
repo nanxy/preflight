@@ -1,6 +1,4 @@
 // components/SortableTaskCard.jsx
-// Wrapper for cards living in Today (sortable). Uses dnd-kit's useSortable.
-
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import TaskCard from './TaskCard.jsx';

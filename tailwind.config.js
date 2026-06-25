@@ -15,7 +15,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['system-ui', '-apple-system', 'sans-serif'],
+        // Inter for body, Fraunces for headings (Calm Garden vibe)
+        sans:    ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Fraunces', 'Georgia', 'serif'],
       },
     },
   },

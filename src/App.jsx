@@ -1,5 +1,5 @@
 // App.jsx
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import {
   DndContext, DragOverlay, PointerSensor, KeyboardSensor,
   useSensor, useSensors, closestCenter,
@@ -13,7 +13,7 @@ import {
 } from './lib/storage.js';
 import { sortTasks, groupByCategory } from './lib/sort.js';
 import { haptics } from './lib/haptics.js';
-import { CATEGORY_COLOR_STOPS } from './data/defaults.js';
+import { celebrate } from './lib/celebrate.js';
 
 import TodayZone from './components/TodayZone.jsx';
 import QueueSection from './components/QueueSection.jsx';
@@ -31,17 +31,14 @@ export default function App() {
   const [version, setVersion] = useState(0);
   const refresh = useCallback(() => setVersion(v => v + 1), []);
 
-  // sort persisted across reloads
   const [sortField, setSortField] = useState(() => preferencesStore.get().lastSort?.field ?? 'priority');
-  const [sortDir, setSortDir]     = useState(() => preferencesStore.get().lastSort?.direction ?? 'desc');
+  const [sortDir,   setSortDir]   = useState(() => preferencesStore.get().lastSort?.direction ?? 'desc');
 
   function handleSortChange(field, dir) {
     setSortField(field); setSortDir(dir);
     preferencesStore.setLastSort(field, dir);
   }
 
-  // data
-  const all       = useMemo(() => tasksStore.list(),      [version]);
   const today     = useMemo(() => tasksStore.queued(),    [version]);
   const queueRaw  = useMemo(() => tasksStore.inQueue(),   [version]);
   const completed = useMemo(() => tasksStore.completed(), [version]);
@@ -49,45 +46,42 @@ export default function App() {
   const cats      = useMemo(() => categoriesStore.active(), [version]);
   const prefs     = useMemo(() => preferencesStore.get(), [version]);
 
-  // include archived categories so archived tasks still resolve their chip
-  const categoriesById = useMemo(() => {
-    const all = categoriesStore.list();
-    return Object.fromEntries(all.map(c => [c.id, c]));
-  }, [version]);
-
-  const queueSorted = useMemo(
-    () => sortTasks(queueRaw, sortField, sortDir),
-    [queueRaw, sortField, sortDir]
+  const categoriesById = useMemo(
+    () => Object.fromEntries(categoriesStore.list().map(c => [c.id, c])),
+    [version]
   );
+
+  const queueSorted  = useMemo(() => sortTasks(queueRaw, sortField, sortDir), [queueRaw, sortField, sortDir]);
   const queueGrouped = useMemo(
     () => sortField === 'category' ? groupByCategory(queueSorted, 'priority', 'desc') : null,
     [queueSorted, sortField]
   );
 
-  // edit & settings modals
-  const [editingTask, setEditingTask] = useState(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-
-  // pending confirm pattern — any destructive action goes through this
+  const [editingTask, setEditingTask]     = useState(null);
+  const [settingsOpen, setSettingsOpen]   = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState(null);
-
-  // ---------- actions ----------
 
   const handleCreate    = (data) => { tasksStore.create(data); haptics.success(); refresh(); };
   const handleEnqueue   = (id) => { preferencesStore.enqueue(id); haptics.tap(); refresh(); };
   const handleDequeue   = (id) => { preferencesStore.dequeue(id); haptics.tap(); refresh(); };
-  const handleComplete  = (id) => { tasksStore.complete(id); preferencesStore.dequeue(id); haptics.success(); refresh(); };
   const handleStart     = (id) => { tasksStore.start(id); haptics.tap(); refresh(); };
-  const handleUnarchive = (id) => { tasksStore.update(id, { status: 'not_started' }); haptics.tap(); refresh(); };
+
+  const handleComplete = (id) => {
+    const t = tasksStore.byId(id);
+    const cat = t ? categoriesById[t.categoryId] : null;
+    tasksStore.complete(id);
+    preferencesStore.dequeue(id);
+    haptics.success();
+    celebrate(cat);
+    refresh();
+  };
 
   const handleArchive = (id) => {
     const t = tasksStore.byId(id);
     setPendingConfirm({
-      kind: 'archive',
       title: 'Archive this task?',
       message: `"${t?.title ?? ''}" will be hidden but kept. You can restore it later.`,
       confirmLabel: 'Archive',
-      destructive: false,
       execute: () => {
         tasksStore.archive(id);
         preferencesStore.dequeue(id);
@@ -104,10 +98,17 @@ export default function App() {
     refresh();
   };
 
-  const handleEdit = (task) => setEditingTask(task);
+  const handleRestore = (id, opts = {}) => {
+    tasksStore.update(id, { status: 'not_started', completedAt: null });
+    if (opts.enqueue) preferencesStore.enqueue(id);
+    haptics.tap();
+    refresh();
+  };
+
+  const handleEdit     = (task) => setEditingTask(task);
   const handleSaveEdit = (id, patch) => { tasksStore.update(id, patch); refresh(); };
 
-  // ---------- drag and drop ----------
+  // ---------- dnd ----------
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
@@ -130,20 +131,24 @@ export default function App() {
     const activeId = active.id;
     const overId   = over.id;
 
-    const wasInToday = today.some(t => t.id === activeId);
-    const wasInQueue = queueSorted.some(t => t.id === activeId);
+    const wasInToday     = today.some(t => t.id === activeId);
+    const wasInQueue     = queueSorted.some(t => t.id === activeId);
+    const wasInCompleted = completed.some(t => t.id === activeId);
+    const wasInArchived  = archived.some(t => t.id === activeId);
+    const wasInactive    = wasInCompleted || wasInArchived;
 
-    const overIsToday = overId === 'zone-today' || today.some(t => t.id === overId);
-    const overIsQueue = overId === 'zone-queue' || queueSorted.some(t => t.id === overId);
+    const overIsToday     = overId === 'zone-today'     || today.some(t => t.id === overId);
+    const overIsQueue     = overId === 'zone-queue'     || queueSorted.some(t => t.id === overId);
+    const overIsCompleted = overId === 'zone-completed' || completed.some(t => t.id === overId);
+    const overIsArchived  = overId === 'zone-archived'  || archived.some(t => t.id === overId);
 
     if (overIsToday) {
       if (wasInQueue) {
-        // moving from queue into today at insertion point
-        const insertAt = overId === 'zone-today'
-          ? today.length
-          : today.findIndex(t => t.id === overId);
+        const insertAt = overId === 'zone-today' ? today.length : today.findIndex(t => t.id === overId);
         preferencesStore.reorderQueue(activeId, insertAt);
         refresh();
+      } else if (wasInactive) {
+        handleRestore(activeId, { enqueue: true });
       } else if (wasInToday && activeId !== overId && overId !== 'zone-today') {
         const oldIndex = today.findIndex(t => t.id === activeId);
         const newIndex = today.findIndex(t => t.id === overId);
@@ -154,14 +159,28 @@ export default function App() {
       return;
     }
 
-    if (overIsQueue && wasInToday) {
-      preferencesStore.dequeue(activeId);
-      refresh();
+    if (overIsQueue) {
+      if (wasInToday) {
+        preferencesStore.dequeue(activeId);
+        refresh();
+      } else if (wasInactive) {
+        handleRestore(activeId);
+      }
+      return;
+    }
+
+    if (overIsCompleted && !wasInCompleted) {
+      handleComplete(activeId);
+      return;
+    }
+
+    if (overIsArchived && !wasInArchived) {
+      handleArchive(activeId);
+      return;
     }
   }
 
-  // overlay preview while dragging
-  const activeTask = activeDragId ? tasksStore.byId(activeDragId) : null;
+  const activeTask     = activeDragId ? tasksStore.byId(activeDragId) : null;
   const activeCategory = activeTask ? categoriesById[activeTask.categoryId] : null;
 
   // ---------- render ----------
@@ -179,15 +198,13 @@ export default function App() {
       onDragEnd={handleDragEnd}
     >
       <div className="min-h-screen">
-        <header className="sticky top-0 z-20 backdrop-blur bg-[#FBFAF7]/80 dark:bg-[#1B1B1A]/80 border-b border-gray-200/60 dark:border-gray-700/60">
-          <div className="mx-auto max-w-3xl px-5 py-3 flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight">preflight</h1>
-              <p className="text-xs text-gray-500 -mt-0.5">{dayLabel}</p>
-            </div>
+        {/* Slim header — no logo. Date on the left, settings on the right. */}
+        <header className="sticky top-0 z-20 backdrop-blur bg-[#FBFAF7]/85 dark:bg-[#1B1B1A]/85 border-b border-gray-200/60 dark:border-gray-700/60">
+          <div className="mx-auto max-w-3xl px-5 py-2 flex items-center justify-between">
+            <p className="font-display text-sm text-gray-600 dark:text-gray-300">{dayLabel}</p>
             <button
               onClick={() => setSettingsOpen(true)}
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300"
+              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300"
               aria-label="Settings"
             >
               <SettingsIcon />
@@ -196,10 +213,10 @@ export default function App() {
         </header>
 
         <main className="mx-auto max-w-3xl px-5 py-5 pb-32 space-y-5">
-
           <TodayZone
             tasks={today}
             categoriesById={categoriesById}
+            activeSort={sortField}
             onDequeue={handleDequeue}
             onComplete={handleComplete}
             onEdit={handleEdit}
@@ -213,24 +230,31 @@ export default function App() {
             tasks={queueSorted}
             grouped={queueGrouped}
             categoriesById={categoriesById}
+            activeSort={sortField}
             onEnqueue={handleEnqueue}
             onComplete={handleComplete}
             onEdit={handleEdit}
             onArchive={handleArchive}
           />
 
-          <CompletedAccordion tasks={completed} categoriesById={categoriesById} />
+          <CompletedAccordion
+            tasks={completed}
+            categoriesById={categoriesById}
+            onRestore={(id) => handleRestore(id)}
+            onEdit={handleEdit}
+          />
+
           <ArchivedAccordion
             tasks={archived}
             categoriesById={categoriesById}
-            onUnarchive={handleUnarchive}
+            onRestore={(id) => handleRestore(id)}
             onEdit={handleEdit}
           />
         </main>
 
-        <DragOverlay>
+        <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
           {activeTask ? (
-            <div className="opacity-90">
+            <div className="opacity-95 rotate-1">
               <TaskCard task={activeTask} category={activeCategory} source="queue" />
             </div>
           ) : null}

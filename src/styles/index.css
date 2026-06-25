@@ -10,15 +10,19 @@ html, body, #root { height: 100%; }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: #FBFAF7;
   color: #2C2C2A;
   -webkit-font-smoothing: antialiased;
-  /* prevent iOS rubber-band scroll bleeding into drag gestures */
   overscroll-behavior-y: contain;
 }
 
-/* dark mode: either OS pref (no override) OR explicit data-theme="dark" */
+h1, h2, h3, .font-display {
+  font-family: 'Fraunces', Georgia, serif;
+  font-feature-settings: "ss01", "ss02";
+  letter-spacing: -0.01em;
+}
+
 @media (prefers-color-scheme: dark) {
   html:not([data-theme="light"]) body { background: #1B1B1A; color: #F1EFE8; }
 }
@@ -30,9 +34,7 @@ html[data-theme="dark"] body { background: #1B1B1A; color: #F1EFE8; }
   -webkit-touch-callout: none;
 }
 
-/* hide scrollbar on sort chips row */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
 
-/* disable touch scrolling on draggable cards so dnd-kit owns the gesture */
 .dnd-draggable { touch-action: none; }

@@ -1,41 +1,34 @@
 // components/TaskCard.jsx
-// Category-themed card. Height scales with time bucket. Always shows all
-// priority components. Hover/tap expands to reveal action buttons.
-//
-// Card is "pure" — receives drag attributes from a wrapper (Sortable in
-// Today, Draggable in Queue) so it doesn't depend on dnd-kit directly.
+// Layout: priority score BLOCK on the left, title + chip pills on the right.
+// Card height scales with time bucket; the score block grows to match.
+// Inactive (completed / archived) state desaturates.
 
 import { useState } from 'react';
 import { CATEGORY_COLOR_STOPS, CARD_PADDING_BY_SCALE, TIME_BUCKETS } from '../data/defaults.js';
-import CategoryChip from './CategoryChip.jsx';
-import PriorityScore from './PriorityScore.jsx';
-import ScoreInputs from './ScoreInputs.jsx';
+import PriorityScoreBlock from './PriorityScoreBlock.jsx';
+import TaskChips from './TaskChips.jsx';
 
 const SCALE_BY_BUCKET = Object.fromEntries(TIME_BUCKETS.map(b => [b.id, b.cardScale]));
 
 export default function TaskCard({
-  task,
-  category,
-  source = 'queue',          // 'queue' | 'today' | 'archived'
+  task, category,
+  source = 'queue',
+  activeSort = null,
   isFirstInToday = false,
-  dragHandleProps = {},      // {...attributes, ...listeners} from dnd-kit
+  dragHandleProps = {},
   isDragging = false,
-  onEnqueue,
-  onDequeue,
-  onComplete,
-  onEdit,
-  onArchive,
-  onUnarchive,
-  onStart,
+  onEnqueue, onDequeue, onComplete, onEdit, onArchive, onStart, onRestore,
 }) {
   const [expanded, setExpanded] = useState(false);
   const stops = CATEGORY_COLOR_STOPS[category?.color ?? 'gray'];
   const scale = SCALE_BY_BUCKET[task.timeBucket] ?? 1;
   const padCls = CARD_PADDING_BY_SCALE[scale] ?? CARD_PADDING_BY_SCALE[1];
+  const inactive = source === 'completed' || source === 'archived';
 
   const cardStyle = {
     background: stops[50],
     borderLeftColor: stops[400],
+    ...(inactive ? { filter: 'grayscale(0.55) opacity(0.78)' } : {}),
   };
 
   const stopAnd = (fn) => (e) => { e.stopPropagation(); fn?.(task.id); };
@@ -49,34 +42,49 @@ export default function TaskCard({
       onMouseLeave={() => setExpanded(false)}
       style={cardStyle}
       className={[
-        'dnd-draggable group rounded-xl border border-l-4 transition-all duration-150 no-select cursor-grab active:cursor-grabbing px-4',
-        padCls,
+        'dnd-draggable group rounded-xl border border-l-4 transition-all duration-150 no-select cursor-grab active:cursor-grabbing overflow-hidden',
         'border-gray-200/60 dark:border-gray-700',
         'hover:shadow-md hover:-translate-y-0.5',
         isFirstInToday ? 'ring-2 ring-priority-300' : '',
         isDragging ? 'opacity-40 ring-2 ring-priority-400' : '',
       ].join(' ')}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
-            <CategoryChip category={category} />
+      <div className={`flex items-stretch gap-3 ${padCls} pr-4 pl-2.5`}>
+        {/* Priority score block on the left, full height */}
+        <PriorityScoreBlock
+          task={task}
+          category={category}
+          highlighted={activeSort === 'priority'}
+        />
+
+        {/* Title + chips on the right */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5 py-0.5">
+          {/* row 1: status badges + title */}
+          <div className="flex items-center gap-2 flex-wrap">
             {isFirstInToday && (
               <span className="text-[10px] uppercase tracking-wider font-semibold text-priority-700">up next</span>
             )}
+            {source === 'completed' && (
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">done</span>
+            )}
+            {source === 'archived' && (
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">archived</span>
+            )}
           </div>
-          <div className="text-base font-medium leading-tight" style={{ color: stops[800] }}>
+          <div
+            className={`font-display text-[15px] font-medium leading-tight ${source === 'completed' ? 'line-through decoration-gray-400/60' : ''}`}
+            style={{ color: stops[800] }}
+          >
             {task.title}
           </div>
-          <div className="mt-2">
-            <ScoreInputs task={task} />
-          </div>
+
+          {/* row 2: pills */}
+          <TaskChips task={task} category={category} activeSort={activeSort} />
         </div>
-        <PriorityScore task={task} />
       </div>
 
       {expanded && (
-        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200/50 flex-wrap">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-t border-gray-200/50 flex-wrap bg-white/30">
           {source === 'queue' && onEnqueue && (
             <ActionBtn onClick={stopAnd(onEnqueue)} accent stops={stops}>+ today</ActionBtn>
           )}
@@ -86,10 +94,10 @@ export default function TaskCard({
           {source === 'today' && onDequeue && (
             <ActionBtn onClick={stopAnd(onDequeue)} stops={stops}>↩ remove</ActionBtn>
           )}
-          {source === 'archived' && onUnarchive && (
-            <ActionBtn onClick={stopAnd(onUnarchive)} accent stops={stops}>↺ restore</ActionBtn>
+          {(source === 'completed' || source === 'archived') && onRestore && (
+            <ActionBtn onClick={stopAnd(onRestore)} accent stops={stops}>↺ restore</ActionBtn>
           )}
-          {source !== 'archived' && onComplete && (
+          {source !== 'completed' && source !== 'archived' && onComplete && (
             <ActionBtn onClick={stopAnd(onComplete)} stops={stops}>✓ done</ActionBtn>
           )}
           {onEdit && (
@@ -121,7 +129,7 @@ function ActionBtn({ onClick, accent = false, stops, children }) {
     <button
       onPointerDown={(e) => e.stopPropagation()}
       onClick={onClick}
-      className="text-xs px-3 py-1.5 rounded-full border bg-white/60 hover:bg-white transition-colors"
+      className="text-xs px-3 py-1.5 rounded-full border bg-white/70 hover:bg-white transition-colors"
       style={{ borderColor: stops[100], color: stops[800] }}
     >
       {children}

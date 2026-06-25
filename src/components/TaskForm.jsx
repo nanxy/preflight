@@ -1,13 +1,15 @@
 // components/TaskForm.jsx
-// Shared form. Themed selection states use the actual category's color
-// instead of a generic priority blue. Sliders show symbol bounds. Time
-// bucket buttons are stronger contrast when selected. "+ new" chip at end
-// of the category row opens an inline mini-form.
+// Higher-contrast selection states for category chips, time buckets, and
+// flow buttons (both light and dark mode). Bubble sliders for enjoyment +
+// friction with symbol bounds. Inline category creator.
 
 import { useState } from 'react';
-import { TIME_BUCKETS, SLIDER_SYMBOLS, AVAILABLE_COLORS, CATEGORY_COLOR_STOPS } from '../data/defaults.js';
+import {
+  TIME_BUCKETS, SLIDER_SYMBOLS, AVAILABLE_COLORS, CATEGORY_COLOR_STOPS,
+} from '../data/defaults.js';
 import { categories as catsStore } from '../lib/storage.js';
 import { PlusIcon } from './Icons.jsx';
+import BubbleSlider from './BubbleSlider.jsx';
 
 export default function TaskForm({
   initial = {}, bucket: initialBucket, categories,
@@ -28,14 +30,14 @@ export default function TaskForm({
   const [newCatColor, setNewCatColor] = useState('purple');
 
   const canSubmit = title.trim().length > 0 && categoryId;
+  const selectedCat = categories.find(c => c.id === categoryId);
+  const selectedStops = CATEGORY_COLOR_STOPS[selectedCat?.color ?? 'purple'];
 
   function submit() {
     if (!canSubmit) return;
     onSubmit({
-      title: title.trim(),
-      categoryId, enjoyment, friction, timeBucket,
-      dueDate: dueDate || null,
-      flow, isRoutine,
+      title: title.trim(), categoryId, enjoyment, friction, timeBucket,
+      dueDate: dueDate || null, flow, isRoutine,
     });
   }
 
@@ -57,7 +59,7 @@ export default function TaskForm({
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter' && canSubmit) submit(); }}
         placeholder="what is it?"
-        className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent focus:outline-none focus:ring-2 focus:ring-priority-400 mb-4"
+        className="w-full px-3 py-2.5 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-priority-400 mb-4"
       />
 
       <Label>category</Label>
@@ -69,18 +71,27 @@ export default function TaskForm({
             <button
               key={c.id}
               onClick={() => setCategory(c.id)}
-              className="text-xs px-3 py-1.5 rounded-full font-medium border-2 transition-all"
+              className={[
+                'text-xs px-3 py-1.5 rounded-full font-medium border-2 transition-all inline-flex items-center gap-1.5',
+                selected
+                  ? 'text-white shadow-sm'
+                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:border-gray-400 dark:hover:border-gray-400',
+              ].join(' ')}
               style={selected
-                ? { background: stops[100], color: stops[800], borderColor: stops[600] }
-                : { background: 'transparent', color: stops[800], borderColor: stops[100] }}
+                ? { background: stops[600], borderColor: stops[600] }
+                : undefined}
             >
+              <span
+                className="inline-block w-2 h-2 rounded-full shrink-0"
+                style={{ background: selected ? 'rgba(255,255,255,0.7)' : stops[400] }}
+              />
               {c.label}
             </button>
           );
         })}
         <button
           onClick={() => setShowNewCat(v => !v)}
-          className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border-2 border-dashed border-gray-300 text-gray-500 hover:border-gray-500 hover:text-gray-700 transition-colors"
+          className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-500 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
         >
           <PlusIcon /> new
         </button>
@@ -94,7 +105,7 @@ export default function TaskForm({
             onChange={(e) => setNewCatLabel(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') createCategory(); }}
             placeholder="category name"
-            className="w-full px-2 py-1.5 rounded border border-gray-200 dark:border-gray-700 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-priority-400"
+            className="w-full px-2 py-1.5 rounded border border-gray-200 dark:border-gray-700 bg-transparent text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-priority-400"
           />
           <div className="flex items-center gap-1.5 flex-wrap">
             {AVAILABLE_COLORS.map(c => (
@@ -107,7 +118,7 @@ export default function TaskForm({
               />
             ))}
             <div className="ml-auto flex gap-1.5">
-              <button onClick={() => setShowNewCat(false)} className="text-xs px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800">cancel</button>
+              <button onClick={() => setShowNewCat(false)} className="text-xs px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300">cancel</button>
               <button onClick={createCategory} disabled={!newCatLabel.trim()} className="text-xs px-3 py-1 rounded bg-priority-600 text-white disabled:opacity-40">add</button>
             </div>
           </div>
@@ -123,10 +134,10 @@ export default function TaskForm({
               key={b.id}
               onClick={() => setBucket(b.id)}
               className={[
-                'text-xs px-2 py-2 rounded-lg font-medium border-2 transition-all',
+                'text-xs px-2 py-2.5 rounded-lg font-medium border-2 transition-all',
                 selected
-                  ? 'border-priority-600 bg-priority-600 text-white'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300',
+                  ? 'border-priority-600 bg-priority-600 text-white shadow-sm'
+                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-priority-400 text-gray-800 dark:text-gray-100',
               ].join(' ')}
             >
               {b.short}
@@ -136,9 +147,37 @@ export default function TaskForm({
       </div>
 
       <Label>how does it feel?</Label>
-      <div className="space-y-3 mb-4">
-        <SliderRow label="enjoyment" value={enjoyment} onChange={setEnjoyment} symbols={SLIDER_SYMBOLS.enjoyment} />
-        <SliderRow label="friction"  value={friction}  onChange={setFriction}  symbols={SLIDER_SYMBOLS.friction} />
+      <div className="space-y-4 mb-5">
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-sm text-gray-600 dark:text-gray-300">enjoyment</span>
+            <span className="text-xs text-gray-400 tabular-nums">{enjoyment} / 5</span>
+          </div>
+          <BubbleSlider
+            value={enjoyment}
+            onChange={setEnjoyment}
+            color={selectedStops[600]}
+            lowSymbol={SLIDER_SYMBOLS.enjoyment.low}
+            highSymbol={SLIDER_SYMBOLS.enjoyment.high}
+            lowLabel={SLIDER_SYMBOLS.enjoyment.lowLabel}
+            highLabel={SLIDER_SYMBOLS.enjoyment.highLabel}
+          />
+        </div>
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-sm text-gray-600 dark:text-gray-300">friction</span>
+            <span className="text-xs text-gray-400 tabular-nums">{friction} / 5</span>
+          </div>
+          <BubbleSlider
+            value={friction}
+            onChange={setFriction}
+            color={selectedStops[600]}
+            lowSymbol={SLIDER_SYMBOLS.friction.low}
+            highSymbol={SLIDER_SYMBOLS.friction.high}
+            lowLabel={SLIDER_SYMBOLS.friction.lowLabel}
+            highLabel={SLIDER_SYMBOLS.friction.highLabel}
+          />
+        </div>
       </div>
 
       <Label>optional</Label>
@@ -147,9 +186,9 @@ export default function TaskForm({
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent text-sm"
+          className="px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100"
         />
-        <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="flex rounded-lg border-2 border-gray-300 dark:border-gray-600 overflow-hidden">
           {[
             { v: 0, label: 'no flow' },
             { v: 1, label: '→' },
@@ -160,14 +199,16 @@ export default function TaskForm({
               onClick={() => setFlow(o.v)}
               className={[
                 'flex-1 text-sm py-2 transition-colors',
-                flow === o.v ? 'bg-priority-600 text-white font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300',
+                flow === o.v
+                  ? 'bg-priority-600 text-white font-semibold'
+                  : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100',
               ].join(' ')}
             >
               {o.label}
             </button>
           ))}
         </div>
-        <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm">
+        <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 cursor-pointer hover:border-priority-400 transition-colors text-sm text-gray-800 dark:text-gray-100">
           <input
             type="checkbox"
             checked={isRoutine}
@@ -183,7 +224,7 @@ export default function TaskForm({
         <div className="flex gap-2">
           <button
             onClick={onCancel}
-            className="px-4 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="px-4 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 transition-colors"
           >cancel</button>
           <button
             onClick={submit}
@@ -197,26 +238,5 @@ export default function TaskForm({
 }
 
 function Label({ children }) {
-  return <label className="block text-xs uppercase tracking-wider text-gray-400 mb-1.5">{children}</label>;
-}
-
-function SliderRow({ label, value, onChange, symbols }) {
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-sm text-gray-500">{label}</span>
-        <span className="text-xs text-gray-400 tabular-nums">{value} / 5</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-lg" title={symbols.lowLabel}>{symbols.low}</span>
-        <input
-          type="range" min={1} max={5} step={1}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="flex-1 accent-priority-600"
-        />
-        <span className="text-lg" title={symbols.highLabel}>{symbols.high}</span>
-      </div>
-    </div>
-  );
+  return <label className="block text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5 font-semibold">{children}</label>;
 }

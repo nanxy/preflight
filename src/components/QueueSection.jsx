@@ -1,19 +1,13 @@
 // components/QueueSection.jsx
-// Bottom region. Draggable cards (not sortable — their order comes from
-// SortChips). Doubles as a drop target so Today cards can drag back out.
+// "UP NEXT — sorted for you" framing, courtesy of the Mixtape exploration.
 
 import { useDroppable } from '@dnd-kit/core';
 import DraggableTaskCard from './DraggableTaskCard.jsx';
 import CategoryGroup from './CategoryGroup.jsx';
 
 export default function QueueSection({
-  tasks,
-  grouped,
-  categoriesById,
-  onEnqueue,
-  onComplete,
-  onEdit,
-  onArchive,
+  tasks, grouped, categoriesById, activeSort,
+  onEnqueue, onComplete, onEdit, onArchive,
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: 'zone-queue' });
   const empty = tasks.length === 0;
@@ -27,7 +21,10 @@ export default function QueueSection({
       ].join(' ')}
     >
       <div className="flex items-baseline justify-between mb-3 px-2">
-        <h2 className="text-base font-semibold">Queue</h2>
+        <div>
+          <h2 className="font-display text-lg leading-tight">Up next</h2>
+          <p className="text-[11px] uppercase tracking-wider text-gray-400 font-medium">sorted for you</p>
+        </div>
         <span className="text-xs text-gray-500">
           {empty ? '' : `${tasks.length} task${tasks.length === 1 ? '' : 's'}`}
         </span>
@@ -45,6 +42,7 @@ export default function QueueSection({
               category={categoriesById[categoryId]}
               tasks={groupTasks}
               categoriesById={categoriesById}
+              activeSort={activeSort}
               onEnqueue={onEnqueue}
               onComplete={onComplete}
               onEdit={onEdit}
@@ -60,6 +58,7 @@ export default function QueueSection({
                 task={task}
                 category={categoriesById[task.categoryId]}
                 source="queue"
+                activeSort={activeSort}
                 onEnqueue={onEnqueue}
                 onComplete={onComplete}
                 onEdit={onEdit}

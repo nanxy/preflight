@@ -3,7 +3,7 @@ import { CATEGORY_COLOR_STOPS } from '../data/defaults.js';
 import DraggableTaskCard from './DraggableTaskCard.jsx';
 
 export default function CategoryGroup({
-  category, tasks, categoriesById,
+  category, tasks, categoriesById, activeSort,
   onEnqueue, onComplete, onEdit, onArchive,
 }) {
   const stops = CATEGORY_COLOR_STOPS[category?.color ?? 'gray'];
@@ -11,7 +11,7 @@ export default function CategoryGroup({
   return (
     <div className="rounded-2xl p-3" style={{ background: stops[50] + 'cc' }}>
       <div className="flex items-baseline justify-between mb-2 px-2">
-        <h3 className="text-sm font-semibold capitalize" style={{ color: stops[800] }}>
+        <h3 className="font-display text-sm capitalize" style={{ color: stops[800] }}>
           {category?.label ?? 'uncategorized'}
         </h3>
         <span className="text-xs" style={{ color: stops[600] }}>{tasks.length}</span>
@@ -23,6 +23,7 @@ export default function CategoryGroup({
               task={task}
               category={category}
               source="queue"
+              activeSort={activeSort}
               onEnqueue={onEnqueue}
               onComplete={onComplete}
               onEdit={onEdit}
