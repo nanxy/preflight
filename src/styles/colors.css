@@ -1,0 +1,205 @@
+/* colors.css
+   Single source of truth for all theme colors.
+   Light theme lives in :root. Dark theme overrides via html[data-theme="dark"].
+   Edit values here to retheme the app. Any swatch-needs-actual-hex consumer
+   (the color picker dots) mirrors these values in src/data/defaults.js under
+   CATEGORY_HEX. Keep that table in sync if you edit hex values below.
+*/
+
+:root {
+  /* ===========================================================
+     APP SURFACE
+     Base background and ink. Used by body and many Tailwind dark:
+     utilities indirectly (Tailwind reads data-theme thanks to
+     darkMode: ['selector', '[data-theme="dark"]'] in tailwind.config).
+  =========================================================== */
+  --bg:          #FBFAF7;
+  --bg-elevated: #FFFFFF;
+  --bg-soft:     #F4F3EF;
+  --ink:         #2C2C2A;
+  --ink-soft:    #5F5E5A;
+  --ink-mute:    #8A8884;
+  --border:      #E5E5E0;
+  --border-soft: #F0EFEB;
+
+  /* ===========================================================
+     PRIORITY RAMP
+     Purple ramp for the priority score number and breakdown bar.
+     Same in both light and dark modes (priority is its own identity).
+  =========================================================== */
+  --priority-50:  #EEEDFE;
+  --priority-100: #CECBF6;
+  --priority-200: #AFA9EC;
+  --priority-400: #7F77DD;
+  --priority-600: #534AB7;
+  --priority-800: #3C3489;
+  --priority-900: #26215C;
+
+  /* ===========================================================
+     CATEGORY PALETTES
+     Five semantic stops per color:
+       -bg     = card background tint (lightest)
+       -tint   = chip background
+       -accent = border-left, dots, fine details
+       -solid  = selected chip fill, button background
+       -ink    = readable text on light bg (deepest)
+     Dark-mode overrides invert lightness so text stays legible.
+  =========================================================== */
+
+  /* blue (career default) */
+  --cat-blue-bg:     #EAF3FC;
+  --cat-blue-tint:   #B5D4F4;
+  --cat-blue-accent: #3E84CC;
+  --cat-blue-solid:  #185FA5;
+  --cat-blue-ink:    #0C447C;
+
+  /* pink (joy default) */
+  --cat-pink-bg:     #FBEEF3;
+  --cat-pink-tint:   #F4C0D1;
+  --cat-pink-accent: #D86B8E;
+  --cat-pink-solid:  #993556;
+  --cat-pink-ink:    #72243E;
+
+  /* coral (social default) */
+  --cat-coral-bg:     #FBEFE8;
+  --cat-coral-tint:   #F5C4B3;
+  --cat-coral-accent: #DD7656;
+  --cat-coral-solid:  #993C1D;
+  --cat-coral-ink:    #712B13;
+
+  /* amber (chores default) */
+  --cat-amber-bg:     #FDF3DD;
+  --cat-amber-tint:   #FAC775;
+  --cat-amber-accent: #CD8D1F;
+  --cat-amber-solid:  #854F0B;
+  --cat-amber-ink:    #633806;
+
+  /* green (health default) */
+  --cat-green-bg:     #F0F7E3;
+  --cat-green-tint:   #C0DD97;
+  --cat-green-accent: #6FA533;
+  --cat-green-solid:  #3B6D11;
+  --cat-green-ink:    #27500A;
+
+  /* teal (self-care default) */
+  --cat-teal-bg:     #E3F6EE;
+  --cat-teal-tint:   #9FE1CB;
+  --cat-teal-accent: #3DA889;
+  --cat-teal-solid:  #0F6E56;
+  --cat-teal-ink:    #085041;
+
+  /* purple (user creatable) */
+  --cat-purple-bg:     #EEEDFE;
+  --cat-purple-tint:   #CECBF6;
+  --cat-purple-accent: #7F77DD;
+  --cat-purple-solid:  #534AB7;
+  --cat-purple-ink:    #3C3489;
+
+  /* gray (user creatable, fallback) */
+  --cat-gray-bg:     #F0EFEB;
+  --cat-gray-tint:   #D3D1C7;
+  --cat-gray-accent: #8A8884;
+  --cat-gray-solid:  #5F5E5A;
+  --cat-gray-ink:    #444441;
+
+  /* ===========================================================
+     STATUS / URGENCY
+     Due-date pill colors by how close the date is.
+  =========================================================== */
+  --urgent-high-bg:    #FEE4E2;
+  --urgent-high-ink:   #9F1F19;
+  --urgent-high-ring:  #FCA5A5;
+
+  --urgent-medium-bg:    #FEF0C7;
+  --urgent-medium-ink:   #92400E;
+  --urgent-medium-ring:  #FCD34D;
+
+  --urgent-low-bg:    #E0E7FF;
+  --urgent-low-ink:   #3730A3;
+  --urgent-low-ring:  #A5B4FC;
+
+  --urgent-none-bg:   #F3F4F6;
+  --urgent-none-ink:  #6B7280;
+  --urgent-none-ring: #D1D5DB;
+}
+
+/* ===========================================================
+   DARK THEME OVERRIDES
+   Strategy: bg/tint become muted dark hues with category warmth.
+   accent and solid stay vivid (work in both modes).
+   ink inverts to the lighter end so text reads on dark surface.
+=========================================================== */
+html[data-theme="dark"] {
+  --bg:          #1B1B1A;
+  --bg-elevated: #2A2A28;
+  --bg-soft:     #232321;
+  --ink:         #F1EFE8;
+  --ink-soft:    #C5C3BC;
+  --ink-mute:    #8A8884;
+  --border:      #3A3A37;
+  --border-soft: #2A2A28;
+
+  --cat-blue-bg:     #15355A;
+  --cat-blue-tint:   #1F4F87;
+  --cat-blue-accent: #5C9CE0;
+  --cat-blue-solid:  #3E84CC;
+  --cat-blue-ink:    #C8DFF5;
+
+  --cat-pink-bg:     #4A1E2E;
+  --cat-pink-tint:   #6F2D44;
+  --cat-pink-accent: #E58BAA;
+  --cat-pink-solid:  #C45577;
+  --cat-pink-ink:    #F6CFDC;
+
+  --cat-coral-bg:     #4A2114;
+  --cat-coral-tint:   #6F311E;
+  --cat-coral-accent: #E58F70;
+  --cat-coral-solid:  #C45A37;
+  --cat-coral-ink:    #F8D2C0;
+
+  --cat-amber-bg:     #432E0A;
+  --cat-amber-tint:   #65450F;
+  --cat-amber-accent: #E3A93B;
+  --cat-amber-solid:  #C28219;
+  --cat-amber-ink:    #FBD895;
+
+  --cat-green-bg:     #213D0B;
+  --cat-green-tint:   #345C12;
+  --cat-green-accent: #92C95E;
+  --cat-green-solid:  #6BA13A;
+  --cat-green-ink:    #D2E9B0;
+
+  --cat-teal-bg:     #0C443A;
+  --cat-teal-tint:   #14665A;
+  --cat-teal-accent: #5BC4A8;
+  --cat-teal-solid:  #389F84;
+  --cat-teal-ink:    #B8E8D9;
+
+  --cat-purple-bg:     #2F2867;
+  --cat-purple-tint:   #443B92;
+  --cat-purple-accent: #9C95E5;
+  --cat-purple-solid:  #7F77DD;
+  --cat-purple-ink:    #D8D5F8;
+
+  --cat-gray-bg:     #2F2F2C;
+  --cat-gray-tint:   #4A4A45;
+  --cat-gray-accent: #9C9A93;
+  --cat-gray-solid:  #7F7E78;
+  --cat-gray-ink:    #DEDCD3;
+
+  --urgent-high-bg:    #5A1A18;
+  --urgent-high-ink:   #FCA5A5;
+  --urgent-high-ring:  #DC4848;
+
+  --urgent-medium-bg:    #4D3308;
+  --urgent-medium-ink:   #FCD34D;
+  --urgent-medium-ring:  #C99012;
+
+  --urgent-low-bg:    #2F2C7A;
+  --urgent-low-ink:   #A5B4FC;
+  --urgent-low-ring:  #6366F1;
+
+  --urgent-none-bg:   #3A3A37;
+  --urgent-none-ink:  #9CA3AF;
+  --urgent-none-ring: #6B7280;
+}

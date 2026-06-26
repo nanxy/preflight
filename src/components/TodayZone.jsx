@@ -1,4 +1,7 @@
 // components/TodayZone.jsx
+// No more dashed border. Soft gradient bg suggests this is the focus zone.
+// Empty state shows a friendly card-styled prompt.
+
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import SortableTaskCard from './SortableTaskCard.jsx';
@@ -15,22 +18,27 @@ export default function TodayZone({
     <section
       ref={setNodeRef}
       className={[
-        'rounded-2xl border-2 border-dashed transition-colors p-4',
-        isOver
-          ? 'border-priority-600 bg-priority-50/40'
-          : 'border-gray-200 dark:border-gray-700',
+        'rounded-2xl p-4 transition-all',
+        'bg-gradient-to-b from-priority-50/60 via-priority-50/20 to-transparent',
+        'dark:from-priority-900/30 dark:via-priority-900/10 dark:to-transparent',
+        isOver ? 'ring-2 ring-priority-400' : '',
       ].join(' ')}
     >
       <div className="flex items-baseline justify-between mb-3 px-1">
         <h2 className="font-display text-lg">Today</h2>
-        <span className="text-xs text-gray-500">
-          {empty ? 'drag cards here to commit' : `${tasks.length} committed`}
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {empty ? '' : `${tasks.length} committed`}
         </span>
       </div>
 
       {empty ? (
-        <div className="py-8 text-center text-sm text-gray-400">
-          drop something here to commit to it today
+        <div className="rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-priority-100 dark:border-priority-900 px-5 py-7 text-center">
+          <p className="font-display text-base text-gray-700 dark:text-gray-200 mb-1">
+            Pick what to do today.
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Drag a card up from your queue, or tap + to add something new.
+          </p>
         </div>
       ) : (
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>

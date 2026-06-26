@@ -1,5 +1,6 @@
 // App.jsx
 import { useMemo, useState, useCallback } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   DndContext, DragOverlay, PointerSensor, KeyboardSensor,
   useSensor, useSensors, closestCenter,
@@ -15,7 +16,7 @@ import { sortTasks, groupByCategory } from './lib/sort.js';
 import { haptics } from './lib/haptics.js';
 import { celebrate } from './lib/celebrate.js';
 
-import TodayZone from './components/TodayZone.jsx';
+import TodayCarousel from './components/TodayCarousel.jsx';
 import QueueSection from './components/QueueSection.jsx';
 import SortChips from './components/SortChips.jsx';
 import CompletedAccordion from './components/CompletedAccordion.jsx';
@@ -25,11 +26,26 @@ import EditModal from './components/EditModal.jsx';
 import ConfirmModal from './components/ConfirmModal.jsx';
 import SettingsPanel from './components/SettingsPanel.jsx';
 import TaskCard from './components/TaskCard.jsx';
-import { SettingsIcon } from './components/Icons.jsx';
+import PageNav from './components/PageNav.jsx';
+import ArchivePage from './components/ArchivePage.jsx';
+import PlaceholderPage from './components/PlaceholderPage.jsx';
+
+const PAGES = ['archive', 'home', 'tbd'];
 
 export default function App() {
   const [version, setVersion] = useState(0);
   const refresh = useCallback(() => setVersion(v => v + 1), []);
+
+  const [currentPage, setCurrentPage] = useState('home');
+  const [pageDir, setPageDir] = useState(1);  // 1 = right, -1 = left, for transitions
+
+  function changePage(next) {
+    const curIdx = PAGES.indexOf(currentPage);
+    const nextIdx = PAGES.indexOf(next);
+    setPageDir(nextIdx > curIdx ? 1 : -1);
+    setCurrentPage(next);
+    haptics.tap();
+  }
 
   const [sortField, setSortField] = useState(() => preferencesStore.get().lastSort?.field ?? 'priority');
   const [sortDir,   setSortDir]   = useState(() => preferencesStore.get().lastSort?.direction ?? 'desc');
@@ -51,20 +67,27 @@ export default function App() {
     [version]
   );
 
-  const queueSorted  = useMemo(() => sortTasks(queueRaw, sortField, sortDir), [queueRaw, sortField, sortDir]);
+  const queueSorted  = useMemo(
+    () => sortTasks(queueRaw, sortField, sortDir, new Date(), categoriesById),
+    [queueRaw, sortField, sortDir, categoriesById]
+  );
   const queueGrouped = useMemo(
-    () => sortField === 'category' ? groupByCategory(queueSorted, 'priority', 'desc') : null,
-    [queueSorted, sortField]
+    () => sortField === 'category'
+      ? groupByCategory(queueSorted, 'priority', 'desc', new Date(), categoriesById)
+      : null,
+    [queueSorted, sortField, categoriesById]
   );
 
-  const [editingTask, setEditingTask]     = useState(null);
-  const [settingsOpen, setSettingsOpen]   = useState(false);
+  const [editingTask, setEditingTask]       = useState(null);
+  const [settingsOpen, setSettingsOpen]     = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState(null);
 
-  const handleCreate    = (data) => { tasksStore.create(data); haptics.success(); refresh(); };
-  const handleEnqueue   = (id) => { preferencesStore.enqueue(id); haptics.tap(); refresh(); };
-  const handleDequeue   = (id) => { preferencesStore.dequeue(id); haptics.tap(); refresh(); };
-  const handleStart     = (id) => { tasksStore.start(id); haptics.tap(); refresh(); };
+  // ---------- actions ----------
+
+  const handleCreate   = (data) => { tasksStore.create(data); haptics.success(); refresh(); };
+  const handleEnqueue  = (id)   => { preferencesStore.enqueue(id); haptics.tap(); refresh(); };
+  const handleDequeue  = (id)   => { preferencesStore.dequeue(id); haptics.tap(); refresh(); };
+  const handleStart    = (id)   => { tasksStore.start(id); haptics.tap(); refresh(); };
 
   const handleComplete = (id) => {
     const t = tasksStore.byId(id);
@@ -98,10 +121,18 @@ export default function App() {
     refresh();
   };
 
+  // restore from completed or archived back to not-started
   const handleRestore = (id, opts = {}) => {
     tasksStore.update(id, { status: 'not_started', completedAt: null });
     if (opts.enqueue) preferencesStore.enqueue(id);
     haptics.tap();
+    refresh();
+  };
+
+  // archived to completed: useful when user realises they actually finished it
+  const handleMarkCompleted = (id) => {
+    tasksStore.update(id, { status: 'completed', completedAt: new Date().toISOString() });
+    haptics.success();
     refresh();
   };
 
@@ -190,6 +221,12 @@ export default function App() {
     weekday: 'long', month: 'short', day: 'numeric',
   });
 
+  const pageVariants = {
+    enter: (dir) => ({ x: dir > 0 ? 40 : -40, opacity: 0 }),
+    center:        { x: 0, opacity: 1 },
+    exit:  (dir) => ({ x: dir > 0 ? -40 : 40, opacity: 0 }),
+  };
+
   return (
     <DndContext
       sensors={sensors}
@@ -198,59 +235,80 @@ export default function App() {
       onDragEnd={handleDragEnd}
     >
       <div className="min-h-screen">
-        {/* Slim header — no logo. Date on the left, settings on the right. */}
-        <header className="sticky top-0 z-20 backdrop-blur bg-[#FBFAF7]/85 dark:bg-[#1B1B1A]/85 border-b border-gray-200/60 dark:border-gray-700/60">
-          <div className="mx-auto max-w-3xl px-5 py-2 flex items-center justify-between">
-            <p className="font-display text-sm text-gray-600 dark:text-gray-300">{dayLabel}</p>
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300"
-              aria-label="Settings"
-            >
-              <SettingsIcon />
-            </button>
-          </div>
-        </header>
+        <PageNav
+          currentPage={currentPage}
+          onPageChange={changePage}
+          onOpenSettings={() => setSettingsOpen(true)}
+          dayLabel={dayLabel}
+        />
 
-        <main className="mx-auto max-w-3xl px-5 py-5 pb-32 space-y-5">
-          <TodayZone
-            tasks={today}
-            categoriesById={categoriesById}
-            activeSort={sortField}
-            onDequeue={handleDequeue}
-            onComplete={handleComplete}
-            onEdit={handleEdit}
-            onArchive={handleArchive}
-            onStart={handleStart}
-          />
+        <AnimatePresence mode="wait" custom={pageDir}>
+          <motion.div
+            key={currentPage}
+            custom={pageDir}
+            variants={pageVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+          >
+            {currentPage === 'home' && (
+              <main className="mx-auto max-w-3xl px-5 py-5 pb-32 space-y-5">
+                <TodayCarousel
+                  tasks={today}
+                  categoriesById={categoriesById}
+                  activeSort={sortField}
+                  onDequeue={handleDequeue}
+                  onComplete={handleComplete}
+                  onEdit={handleEdit}
+                  onArchive={handleArchive}
+                  onStart={handleStart}
+                />
 
-          <SortChips field={sortField} direction={sortDir} onChange={handleSortChange} />
+                <SortChips field={sortField} direction={sortDir} onChange={handleSortChange} />
 
-          <QueueSection
-            tasks={queueSorted}
-            grouped={queueGrouped}
-            categoriesById={categoriesById}
-            activeSort={sortField}
-            onEnqueue={handleEnqueue}
-            onComplete={handleComplete}
-            onEdit={handleEdit}
-            onArchive={handleArchive}
-          />
+                <QueueSection
+                  tasks={queueSorted}
+                  grouped={queueGrouped}
+                  categoriesById={categoriesById}
+                  activeSort={sortField}
+                  onEnqueue={handleEnqueue}
+                  onComplete={handleComplete}
+                  onEdit={handleEdit}
+                  onArchive={handleArchive}
+                />
 
-          <CompletedAccordion
-            tasks={completed}
-            categoriesById={categoriesById}
-            onRestore={(id) => handleRestore(id)}
-            onEdit={handleEdit}
-          />
+                <CompletedAccordion
+                  tasks={completed}
+                  categoriesById={categoriesById}
+                  onRestore={(id) => handleRestore(id)}
+                  onArchive={handleArchive}
+                  onEdit={handleEdit}
+                />
 
-          <ArchivedAccordion
-            tasks={archived}
-            categoriesById={categoriesById}
-            onRestore={(id) => handleRestore(id)}
-            onEdit={handleEdit}
-          />
-        </main>
+                <ArchivedAccordion
+                  tasks={archived}
+                  categoriesById={categoriesById}
+                  onRestore={(id) => handleRestore(id)}
+                  onMarkCompleted={handleMarkCompleted}
+                  onEdit={handleEdit}
+                />
+              </main>
+            )}
+
+            {currentPage === 'archive' && (
+              <ArchivePage
+                tasks={archived}
+                categoriesById={categoriesById}
+                onRestore={(id) => handleRestore(id)}
+                onMarkCompleted={handleMarkCompleted}
+                onEdit={handleEdit}
+              />
+            )}
+
+            {currentPage === 'tbd' && <PlaceholderPage />}
+          </motion.div>
+        </AnimatePresence>
 
         <DragOverlay dropAnimation={{ duration: 220, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
           {activeTask ? (
@@ -260,12 +318,14 @@ export default function App() {
           ) : null}
         </DragOverlay>
 
-        <TaskEntry
-          corner={prefs.plusButtonCorner}
-          categories={cats}
-          onCreate={handleCreate}
-          onCategoriesChanged={refresh}
-        />
+        {currentPage === 'home' && (
+          <TaskEntry
+            corner={prefs.plusButtonCorner}
+            categories={cats}
+            onCreate={handleCreate}
+            onCategoriesChanged={refresh}
+          />
+        )}
 
         <EditModal
           open={!!editingTask}

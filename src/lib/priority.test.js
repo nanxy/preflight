@@ -1,5 +1,5 @@
 // lib/priority.test.js
-// Run with: npm test  (or: node --test src/lib/priority.test.js)
+// Tests updated Jun 25 to reflect routine modifier being disabled.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -24,9 +24,10 @@ test('overdue gets max urgency', () => {
   assert.equal(priorityScore(overdue, FIXED_NOW), 79);
 });
 
-test('routine nudges down', () => {
+test('routine field is ignored (modifier disabled)', () => {
   const t = { enjoyment: 3, friction: 3, timeBucket: 'lt15', dueDate: null, isRoutine: true };
-  assert.equal(priorityScore(t, FIXED_NOW), 34);
+  // was 34 with -5 routine; now 39 (no penalty)
+  assert.equal(priorityScore(t, FIXED_NOW), 39);
 });
 
 test('defaults handle a barely-filled task', () => {
@@ -37,8 +38,17 @@ test('defaults handle a barely-filled task', () => {
 test('clamped to 0-100', () => {
   const max = { enjoyment: 5, friction: 1, timeBucket: 'lt15',  dueDate: '2026-06-01', isRoutine: false };
   assert.equal(priorityScore(max, FIXED_NOW), 100);
+  // min: no routine penalty anymore, so 8 instead of 3
   const min = { enjoyment: 1, friction: 5, timeBucket: '2hplus', dueDate: null,         isRoutine: true };
-  assert.equal(priorityScore(min, FIXED_NOW), 3);
+  assert.equal(priorityScore(min, FIXED_NOW), 8);
+});
+
+test('career category bonus adds +5', () => {
+  const task = { enjoyment: 3, friction: 3, timeBucket: '15_45', dueDate: null };
+  const career = { id: 'cat_career', label: 'career', color: 'blue', priorityBonus: 5 };
+  // baseline: 24 + 10 + 0 = 34; with bonus: 39
+  assert.equal(priorityScore(task, FIXED_NOW, null),   34);
+  assert.equal(priorityScore(task, FIXED_NOW, career), 39);
 });
 
 test('daysUntil handles edge cases', () => {

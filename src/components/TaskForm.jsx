@@ -1,11 +1,10 @@
 // components/TaskForm.jsx
-// Higher-contrast selection states for category chips, time buckets, and
-// flow buttons (both light and dark mode). Bubble sliders for enjoyment +
-// friction with symbol bounds. Inline category creator.
+// "Optional" relabeled to "due date" and split into its own row. Flow gets
+// its own label. Routine section commented out per Jun 25 (kept for future).
 
 import { useState } from 'react';
 import {
-  TIME_BUCKETS, SLIDER_SYMBOLS, AVAILABLE_COLORS, CATEGORY_COLOR_STOPS,
+  TIME_BUCKETS, SLIDER_SYMBOLS, AVAILABLE_COLORS, CATEGORY_COLOR_STOPS, CATEGORY_HEX,
 } from '../data/defaults.js';
 import { categories as catsStore } from '../lib/storage.js';
 import { PlusIcon } from './Icons.jsx';
@@ -23,7 +22,8 @@ export default function TaskForm({
   const [timeBucket, setBucket]   = useState(initialBucket ?? initial.timeBucket ?? '15_45');
   const [dueDate, setDueDate]     = useState(initial.dueDate ?? '');
   const [flow, setFlow]           = useState(initial.flow ?? 0);
-  const [isRoutine, setIsRoutine] = useState(initial.isRoutine ?? false);
+  // routine UI hidden per Jun 25; default false so we don't accidentally flag tasks
+  const isRoutine = false;
 
   const [showNewCat, setShowNewCat]   = useState(false);
   const [newCatLabel, setNewCatLabel] = useState('');
@@ -77,9 +77,7 @@ export default function TaskForm({
                   ? 'text-white shadow-sm'
                   : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:border-gray-400 dark:hover:border-gray-400',
               ].join(' ')}
-              style={selected
-                ? { background: stops[600], borderColor: stops[600] }
-                : undefined}
+              style={selected ? { background: stops[600], borderColor: stops[600] } : undefined}
             >
               <span
                 className="inline-block w-2 h-2 rounded-full shrink-0"
@@ -113,7 +111,7 @@ export default function TaskForm({
                 key={c}
                 onClick={() => setNewCatColor(c)}
                 className={`w-6 h-6 rounded-full border-2 transition-all ${newCatColor === c ? 'border-gray-900 dark:border-white scale-110' : 'border-transparent'}`}
-                style={{ background: CATEGORY_COLOR_STOPS[c][400] }}
+                style={{ background: CATEGORY_HEX[c][400] }}
                 aria-label={c}
               />
             ))}
@@ -180,15 +178,16 @@ export default function TaskForm({
         </div>
       </div>
 
-      <Label>optional</Label>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-5">
+      <Label>due date</Label>
         <input
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100"
+        className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-800 dark:text-gray-100 mb-4"
         />
-        <div className="flex rounded-lg border-2 border-gray-300 dark:border-gray-600 overflow-hidden">
+
+      <Label>flow</Label>
+      <div className="flex rounded-lg border-2 border-gray-300 dark:border-gray-600 overflow-hidden mb-5">
           {[
             { v: 0, label: 'no flow' },
             { v: 1, label: '→' },
@@ -208,16 +207,15 @@ export default function TaskForm({
             </button>
           ))}
         </div>
-        <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 cursor-pointer hover:border-priority-400 transition-colors text-sm text-gray-800 dark:text-gray-100">
-          <input
-            type="checkbox"
-            checked={isRoutine}
-            onChange={(e) => setIsRoutine(e.target.checked)}
-            className="accent-priority-600"
-          />
-          routine
+
+      {/*
+        Routine section disabled Jun 25. Schema field stays for compat.
+        <Label>routine</Label>
+        <label className="flex items-center gap-2 ...">
+          <input type="checkbox" checked={isRoutine} onChange={...} />
+          this repeats regularly
         </label>
-      </div>
+      */}
 
       <div className="flex justify-between items-center gap-2">
         <div className="flex gap-1.5">{extraActions}</div>

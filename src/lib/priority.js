@@ -1,11 +1,9 @@
 // lib/priority.js
-// Priority score, EXP (forward-compat for After), and due-date framing helpers.
+// Priority score, EXP, and due framing.
+// Routine modifier disabled per Jun 25 (schema field kept for future use).
 
 const TIME_BOOST = { lt15: 15, '15_45': 10, '45_2h': 5, '2hplus': 0 };
-
-// EXP scales reward by effort (friction + time), discounts routine work.
-// Range roughly 8–140. Stored nowhere — derived from task fields on display.
-const TIME_XP = { lt15: 10, '15_45': 25, '45_2h': 50, '2hplus': 100 };
+const TIME_XP    = { lt15: 10, '15_45': 25, '45_2h': 50, '2hplus': 100 };
 
 export function daysUntil(dueDate, now = new Date()) {
   if (!dueDate) return null;
@@ -25,28 +23,33 @@ function urgencyScore(dueDate, now) {
   return 5;
 }
 
-export function priorityBreakdown(task, now = new Date()) {
+/**
+ * Breakdown of all priority components. Optional `category` adds the
+ * category-level priorityBonus (e.g. career = +5) when supplied.
+ */
+export function priorityBreakdown(task, now = new Date(), category = null) {
   const enjoyment = task.enjoyment ?? 3;
   const friction  = task.friction  ?? 3;
   const startability = (enjoyment * 4) + ((6 - friction) * 4);
   const timeBoost    = TIME_BOOST[task.timeBucket] ?? 0;
   const urgency      = urgencyScore(task.dueDate, now);
-  const routineAdj   = task.isRoutine ? -5 : 0;
-  const total        = Math.max(0, Math.min(100, Math.round(
-    startability + timeBoost + urgency + routineAdj
+  // routine modifier disabled. const routineAdj = task.isRoutine ? -5 : 0;
+  const routineAdj   = 0;
+  const categoryBonus = category?.priorityBonus ?? 0;
+  const total = Math.max(0, Math.min(100, Math.round(
+    startability + timeBoost + urgency + routineAdj + categoryBonus
   )));
-  return { startability, timeBoost, urgency, routineAdj, total };
+  return { startability, timeBoost, urgency, routineAdj, categoryBonus, total };
 }
 
-export function priorityScore(task, now = new Date()) {
-  return priorityBreakdown(task, now).total;
+export function priorityScore(task, now = new Date(), category = null) {
+  return priorityBreakdown(task, now, category).total;
 }
 
 export function exp(task) {
   const friction = task.friction ?? 3;
   const timeXP   = TIME_XP[task.timeBucket] ?? 0;
-  const routine  = task.isRoutine ? -10 : 0;
-  return Math.max(5, friction * 8 + timeXP + routine);
+  return Math.max(5, friction * 8 + timeXP);
 }
 
 export function saturationFor(score) {
@@ -84,13 +87,6 @@ function mixHex(a, b, t) {
   return '#' + [r, g, bl].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 
-/**
- * ADHD-friendly due-date framing.
- * Returns { bucket, exact, urgency } where:
- *   - bucket: "overdue" | "today" | "tomorrow" | "this week" | "next week" | "this month" | "later"
- *   - exact:  precise "5d" or "Aug 12" — shown on hover
- *   - urgency: "high" | "medium" | "low" | "none"
- */
 export function dueFraming(dueDate, now = new Date()) {
   if (!dueDate) return { bucket: null, exact: null, urgency: 'none' };
   const d = daysUntil(dueDate, now);
@@ -104,7 +100,7 @@ export function dueFraming(dueDate, now = new Date()) {
   else              { bucket = 'later';      urgency = 'none';   }
 
   let exact;
-  if (d < 0)       exact = `${Math.abs(d)} d overdue`;
+  if (d < 0)        exact = `${Math.abs(d)} d overdue`;
   else if (d <= 14) exact = `${d} d`;
   else              exact = new Date(dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 

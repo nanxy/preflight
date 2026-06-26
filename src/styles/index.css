@@ -1,6 +1,10 @@
+
+@import './colors.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
 
 :root { color-scheme: light dark; }
 html[data-theme="light"] { color-scheme: light; }
@@ -11,10 +15,11 @@ html, body, #root { height: 100%; }
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #FBFAF7;
-  color: #2C2C2A;
+  background: var(--bg);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: contain;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 h1, h2, h3, .font-display {
@@ -22,11 +27,6 @@ h1, h2, h3, .font-display {
   font-feature-settings: "ss01", "ss02";
   letter-spacing: -0.01em;
 }
-
-@media (prefers-color-scheme: dark) {
-  html:not([data-theme="light"]) body { background: #1B1B1A; color: #F1EFE8; }
-}
-html[data-theme="dark"] body { background: #1B1B1A; color: #F1EFE8; }
 
 .no-select {
   user-select: none;
@@ -38,3 +38,26 @@ html[data-theme="dark"] body { background: #1B1B1A; color: #F1EFE8; }
 .no-scrollbar { scrollbar-width: none; }
 
 .dnd-draggable { touch-action: none; }
+
+/* ============================================================
+   Glass / neumorphic style for cards outside the Today zone.
+   Cards in Queue, Completed, Archived render with this look.
+   The inline category-color background sits behind a translucent
+   white/dark layer plus a soft inner highlight to fake depth.
+   When a card is dropped into Today, the parent renders it without
+   .glass so the solid themed style returns automatically.
+============================================================ */
+.glass {
+  background-color: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 4px 14px rgba(0, 0, 0, 0.05);
+}
+html[data-theme="dark"] .glass {
+  background-color: rgba(40, 40, 38, 0.45) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 4px 14px rgba(0, 0, 0, 0.3);
+}

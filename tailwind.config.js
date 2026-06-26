@@ -1,6 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
+  // dark: utilities trigger when html has data-theme="dark", not from OS pref.
+  // theme.js resolves "system" to dark/light at apply time and sets the attr.
+  darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
@@ -15,7 +18,6 @@ export default {
         },
       },
       fontFamily: {
-        // Inter for body, Fraunces for headings (Calm Garden vibe)
         sans:    ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         display: ['Fraunces', 'Georgia', 'serif'],
       },

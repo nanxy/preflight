@@ -12,10 +12,10 @@ import { FlowOne, FlowTwo } from './Icons.jsx';
 const TIME_SHORT = Object.fromEntries(TIME_BUCKETS.map(b => [b.id, b.short]));
 
 const URGENCY_STYLE = {
-  high:   { bg: '#FEE4E2', fg: '#9F1F19', ring: '#FCA5A5' },
-  medium: { bg: '#FEF0C7', fg: '#92400E', ring: '#FCD34D' },
-  low:    { bg: '#E0E7FF', fg: '#3730A3', ring: '#A5B4FC' },
-  none:   { bg: '#F3F4F6', fg: '#6B7280', ring: '#D1D5DB' },
+  high:   { bg: 'var(--urgent-high-bg)',   fg: 'var(--urgent-high-ink)',   ring: 'var(--urgent-high-ring)' },
+  medium: { bg: 'var(--urgent-medium-bg)', fg: 'var(--urgent-medium-ink)', ring: 'var(--urgent-medium-ring)' },
+  low:    { bg: 'var(--urgent-low-bg)',    fg: 'var(--urgent-low-ink)',    ring: 'var(--urgent-low-ring)' },
+  none:   { bg: 'var(--urgent-none-bg)',   fg: 'var(--urgent-none-ink)',   ring: 'var(--urgent-none-ring)' },
 };
 
 export default function TaskChips({ task, category, activeSort = null, compact = false }) {
@@ -145,14 +145,14 @@ function symbolFor(kind, value) {
 }
 
 const STOPS = {
-  blue:   { 100: '#B5D4F4', 600: '#185FA5', 800: '#0C447C' },
-  pink:   { 100: '#F4C0D1', 600: '#993556', 800: '#72243E' },
-  coral:  { 100: '#F5C4B3', 600: '#993C1D', 800: '#712B13' },
-  amber:  { 100: '#FAC775', 600: '#854F0B', 800: '#633806' },
-  green:  { 100: '#C0DD97', 600: '#3B6D11', 800: '#27500A' },
-  teal:   { 100: '#9FE1CB', 600: '#0F6E56', 800: '#085041' },
-  purple: { 100: '#CECBF6', 600: '#534AB7', 800: '#3C3489' },
-  gray:   { 100: '#D3D1C7', 600: '#5F5E5A', 800: '#444441' },
+  blue:   { 100: 'var(--cat-blue-tint)',   600: 'var(--cat-blue-solid)',   800: 'var(--cat-blue-ink)' },
+  pink:   { 100: 'var(--cat-pink-tint)',   600: 'var(--cat-pink-solid)',   800: 'var(--cat-pink-ink)' },
+  coral:  { 100: 'var(--cat-coral-tint)',  600: 'var(--cat-coral-solid)',  800: 'var(--cat-coral-ink)' },
+  amber:  { 100: 'var(--cat-amber-tint)',  600: 'var(--cat-amber-solid)',  800: 'var(--cat-amber-ink)' },
+  green:  { 100: 'var(--cat-green-tint)',  600: 'var(--cat-green-solid)',  800: 'var(--cat-green-ink)' },
+  teal:   { 100: 'var(--cat-teal-tint)',   600: 'var(--cat-teal-solid)',   800: 'var(--cat-teal-ink)' },
+  purple: { 100: 'var(--cat-purple-tint)', 600: 'var(--cat-purple-solid)', 800: 'var(--cat-purple-ink)' },
+  gray:   { 100: 'var(--cat-gray-tint)',   600: 'var(--cat-gray-solid)',   800: 'var(--cat-gray-ink)' },
 };
 function categoryHex(c, stop) {
   return STOPS[c?.color ?? 'gray']?.[stop] ?? STOPS.gray[stop];

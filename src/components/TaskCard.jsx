@@ -12,12 +12,12 @@ const SCALE_BY_BUCKET = Object.fromEntries(TIME_BUCKETS.map(b => [b.id, b.cardSc
 
 export default function TaskCard({
   task, category,
-  source = 'queue',
+  source = 'queue',                // 'queue' | 'today' | 'completed' | 'archived'
   activeSort = null,
   isFirstInToday = false,
   dragHandleProps = {},
   isDragging = false,
-  onEnqueue, onDequeue, onComplete, onEdit, onArchive, onStart, onRestore,
+  onEnqueue, onDequeue, onComplete, onEdit, onArchive, onUnarchive, onStart, onRestore, onMarkCompleted,
 }) {
   const [expanded, setExpanded] = useState(false);
   const stops = CATEGORY_COLOR_STOPS[category?.color ?? 'gray'];
@@ -45,6 +45,7 @@ export default function TaskCard({
         'dnd-draggable group rounded-xl border border-l-4 transition-all duration-150 no-select cursor-grab active:cursor-grabbing overflow-hidden',
         'border-gray-200/60 dark:border-gray-700',
         'hover:shadow-md hover:-translate-y-0.5',
+        source !== 'today' ? 'glass' : '',
         isFirstInToday ? 'ring-2 ring-priority-300' : '',
         isDragging ? 'opacity-40 ring-2 ring-priority-400' : '',
       ].join(' ')}
@@ -84,7 +85,7 @@ export default function TaskCard({
       </div>
 
       {expanded && (
-        <div className="flex items-center gap-2 px-4 py-2.5 border-t border-gray-200/50 flex-wrap bg-white/30">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-t border-gray-200/50 dark:border-gray-700/50 flex-wrap bg-white/40 dark:bg-gray-900/40">
           {source === 'queue' && onEnqueue && (
             <ActionBtn onClick={stopAnd(onEnqueue)} accent stops={stops}>+ today</ActionBtn>
           )}
@@ -96,6 +97,9 @@ export default function TaskCard({
           )}
           {(source === 'completed' || source === 'archived') && onRestore && (
             <ActionBtn onClick={stopAnd(onRestore)} accent stops={stops}>↺ restore</ActionBtn>
+          )}
+          {source === 'archived' && onMarkCompleted && (
+            <ActionBtn onClick={stopAnd(onMarkCompleted)} stops={stops}>✓ complete</ActionBtn>
           )}
           {source !== 'completed' && source !== 'archived' && onComplete && (
             <ActionBtn onClick={stopAnd(onComplete)} stops={stops}>✓ done</ActionBtn>
@@ -129,7 +133,7 @@ function ActionBtn({ onClick, accent = false, stops, children }) {
     <button
       onPointerDown={(e) => e.stopPropagation()}
       onClick={onClick}
-      className="text-xs px-3 py-1.5 rounded-full border bg-white/70 hover:bg-white transition-colors"
+      className="text-xs px-3 py-1.5 rounded-full border bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-700 transition-colors"
       style={{ borderColor: stops[100], color: stops[800] }}
     >
       {children}

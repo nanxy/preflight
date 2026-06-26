@@ -17,7 +17,7 @@ function groupKey(date, now = new Date()) {
   return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
-export default function CompletedAccordion({ tasks, categoriesById, onRestore, onEdit }) {
+export default function CompletedAccordion({ tasks, categoriesById, onRestore, onArchive, onEdit }) {
   const [open, setOpen] = useState(false);
   const count = tasks.length;
   const { setNodeRef, isOver } = useDroppable({ id: 'zone-completed' });
@@ -66,6 +66,7 @@ export default function CompletedAccordion({ tasks, categoriesById, onRestore, o
                         category={categoriesById[t.categoryId]}
                         source="completed"
                         onRestore={onRestore}
+                        onArchive={onArchive}
                         onEdit={onEdit}
                       />
                     </li>

@@ -9,7 +9,7 @@ export default function CategoryGroup({
   const stops = CATEGORY_COLOR_STOPS[category?.color ?? 'gray'];
 
   return (
-    <div className="rounded-2xl p-3" style={{ background: stops[50] + 'cc' }}>
+    <div className="rounded-2xl p-3" style={{ background: stops[50] }}>
       <div className="flex items-baseline justify-between mb-2 px-2">
         <h3 className="font-display text-sm capitalize" style={{ color: stops[800] }}>
           {category?.label ?? 'uncategorized'}

@@ -1,6 +1,6 @@
 // lib/sort.js
-// Sort by any scoring input plus a couple of derived fields. When the field
-// is 'category', the UI renders Queue as buckets rather than a flat list.
+// All sort fields. `priority` requires categoriesById so it can apply
+// per-category bonuses (e.g. career = +5).
 
 import { priorityScore } from './priority.js';
 import { tasks as tasksStore } from './storage.js';
@@ -15,26 +15,27 @@ export const SORT_FIELDS = [
   { id: 'time',       label: 'time',       direction: 'asc'  },
   { id: 'dueDate',    label: 'due date',   direction: 'asc'  },
   { id: 'flow',       label: 'flow',       direction: 'desc' },
-  { id: 'routine',    label: 'routine',    direction: 'desc' },
 ];
 
-function get(task, field, now) {
+function get(task, field, now, categoriesById) {
   switch (field) {
-    case 'priority':  return priorityScore(task, now);
+    case 'priority': {
+      const cat = categoriesById?.[task.categoryId];
+      return priorityScore(task, now, cat);
+    }
     case 'enjoyment': return task.enjoyment ?? 3;
     case 'friction':  return task.friction ?? 3;
     case 'time':      return TIME_BUCKET_ORDER[task.timeBucket] ?? 99;
     case 'dueDate':   return task.dueDate ? new Date(task.dueDate).getTime() : Infinity;
     case 'flow':      return task.flow ?? 0;
     case 'category':  return task.categoryId ?? '';
-    case 'routine':   return task.isRoutine ? 1 : 0;
     case 'elapsed':   return tasksStore.elapsedSeconds(task, now) ?? -1;
     default:          return 0;
   }
 }
 
-export function sortTasks(list, field = 'priority', direction = 'desc', now = new Date()) {
-  const decorated = list.map((task, i) => ({ task, i, key: get(task, field, now) }));
+export function sortTasks(list, field = 'priority', direction = 'desc', now = new Date(), categoriesById = {}) {
+  const decorated = list.map((task, i) => ({ task, i, key: get(task, field, now, categoriesById) }));
   decorated.sort((a, b) => {
     if (a.key < b.key) return direction === 'asc' ? -1 : 1;
     if (a.key > b.key) return direction === 'asc' ? 1 : -1;
@@ -43,13 +44,7 @@ export function sortTasks(list, field = 'priority', direction = 'desc', now = ne
   return decorated.map(d => d.task);
 }
 
-/**
- * Group sorted tasks by categoryId. Returns [{ categoryId, tasks: [] }] in the
- * order the categories first appear in `sortedList`. Within each group, tasks
- * keep their existing sort order — useful for sub-sorting (e.g. group by
- * category, sort within by priority).
- */
-export function groupByCategory(sortedList, subSortField = 'priority', subSortDir = 'desc', now = new Date()) {
+export function groupByCategory(sortedList, subSortField = 'priority', subSortDir = 'desc', now = new Date(), categoriesById = {}) {
   const groups = new Map();
   for (const task of sortedList) {
     const id = task.categoryId ?? '__none__';
@@ -60,7 +55,7 @@ export function groupByCategory(sortedList, subSortField = 'priority', subSortDi
   for (const [categoryId, items] of groups) {
     result.push({
       categoryId: categoryId === '__none__' ? null : categoryId,
-      tasks: sortTasks(items, subSortField, subSortDir, now),
+      tasks: sortTasks(items, subSortField, subSortDir, now, categoriesById),
     });
   }
   return result;

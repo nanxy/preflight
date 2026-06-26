@@ -3,7 +3,7 @@
 // collapsible section with a restore button. Add-new at the top.
 
 import { useState } from 'react';
-import { AVAILABLE_COLORS, CATEGORY_COLOR_STOPS } from '../data/defaults.js';
+import { AVAILABLE_COLORS, CATEGORY_COLOR_STOPS, CATEGORY_HEX } from '../data/defaults.js';
 import { categories as catsStore } from '../lib/storage.js';
 import { PlusIcon } from './Icons.jsx';
 
@@ -72,14 +72,14 @@ export default function CategoryEditor({ categories, onChanged }) {
               key={c}
               onClick={() => setNewColor(c)}
               className={`w-5 h-5 rounded-full border-2 transition-all ${newColor === c ? 'border-gray-900 dark:border-white scale-110' : 'border-transparent'}`}
-              style={{ background: CATEGORY_COLOR_STOPS[c][400] }}
+              style={{ background: CATEGORY_HEX[c][400] }}
               aria-label={c}
             />
           ))}
         </div>
       </div>
 
-      {/* active list */}
+      {/* existing */}
       <ul className="space-y-1.5">
         {active.map(cat => {
           const stops = CATEGORY_COLOR_STOPS[cat.color] ?? CATEGORY_COLOR_STOPS.gray;
@@ -114,7 +114,7 @@ export default function CategoryEditor({ categories, onChanged }) {
                     key={c}
                     onClick={() => recolor(cat.id, c)}
                     className={`w-4 h-4 rounded-full border transition-all ${cat.color === c ? 'border-gray-900 dark:border-white scale-110' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                    style={{ background: CATEGORY_COLOR_STOPS[c][400] }}
+                    style={{ background: CATEGORY_HEX[c][400] }}
                     aria-label={c}
                   />
                 ))}

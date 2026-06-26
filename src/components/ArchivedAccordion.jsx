@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import DraggableTaskCard from './DraggableTaskCard.jsx';
 
-export default function ArchivedAccordion({ tasks, categoriesById, onRestore, onEdit }) {
+export default function ArchivedAccordion({ tasks, categoriesById, onRestore, onMarkCompleted, onEdit }) {
   const [open, setOpen] = useState(false);
   const count = tasks.length;
   const { setNodeRef, isOver } = useDroppable({ id: 'zone-archived' });
@@ -44,6 +44,7 @@ export default function ArchivedAccordion({ tasks, categoriesById, onRestore, on
                     category={categoriesById[t.categoryId]}
                     source="archived"
                     onRestore={onRestore}
+                    onMarkCompleted={onMarkCompleted}
                     onEdit={onEdit}
                   />
                 </li>

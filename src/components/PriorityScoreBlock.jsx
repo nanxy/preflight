@@ -1,8 +1,4 @@
 // components/PriorityScoreBlock.jsx
-// Tall block variant of the score — sits on the left of a card, full card
-// height. Big number at top, breakdown bar at bottom. Designed for the
-// new "score block + name/chips" card layout.
-
 import { priorityBreakdown, priorityColor } from '../lib/priority.js';
 import { CATEGORY_COLOR_STOPS } from '../data/defaults.js';
 
@@ -13,7 +9,7 @@ const SEG = {
 };
 
 export default function PriorityScoreBlock({ task, category, highlighted = false }) {
-  const b = priorityBreakdown(task);
+  const b = priorityBreakdown(task, new Date(), category);
   const color = priorityColor(b.total);
   const stops = CATEGORY_COLOR_STOPS[category?.color ?? 'purple'];
 
@@ -25,8 +21,8 @@ export default function PriorityScoreBlock({ task, category, highlighted = false
   const tip = [
     `startability ${b.startability}`,
     `time +${b.timeBoost}`,
-    b.urgency    ? `urgency +${b.urgency}` : null,
-    b.routineAdj ? `routine ${b.routineAdj}` : null,
+    b.urgency       ? `urgency +${b.urgency}` : null,
+    b.categoryBonus ? `${category?.label} bonus +${b.categoryBonus}` : null,
   ].filter(Boolean).join(' · ');
 
   return (
@@ -37,7 +33,7 @@ export default function PriorityScoreBlock({ task, category, highlighted = false
         highlighted ? 'ring-2 ring-priority-400 scale-[1.02]' : '',
       ].join(' ')}
       style={{
-        background: `linear-gradient(180deg, ${stops[100]}40 0%, ${stops[100]}10 100%)`,
+        background: stops[50],
         borderRight: `1px solid ${stops[100]}`,
         transition: 'all 200ms ease',
       }}
@@ -54,7 +50,7 @@ export default function PriorityScoreBlock({ task, category, highlighted = false
           {wTime  > 0 && <div style={{ width: `${wTime}%`,  background: SEG.timeBoost }} />}
           {wUrg   > 0 && <div style={{ width: `${wUrg}%`,   background: SEG.urgency }} />}
         </div>
-        <div className="text-[9px] uppercase tracking-wider text-center mt-1 font-medium text-gray-500">
+        <div className="text-[9px] uppercase tracking-wider text-center mt-1 font-medium text-gray-500 dark:text-gray-400">
           priority
         </div>
       </div>
