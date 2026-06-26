@@ -53,7 +53,7 @@ export default function PriorityScoreBlock({ task, category, highlighted = false
     <div
       title={tip}
       className={[
-        'flex flex-col items-center justify-between rounded-xl px-2.5 py-2 min-w-[58px] cursor-help shrink-0',
+        'flex flex-col items-center rounded-xl px-2.5 py-2 min-w-[58px] cursor-help shrink-0 gap-1.5',
         highlighted ? 'ring-2 ring-priority-400 scale-[1.02]' : '',
       ].join(' ')}
       style={{
@@ -65,7 +65,7 @@ export default function PriorityScoreBlock({ task, category, highlighted = false
       <span className="font-display text-3xl font-semibold leading-none tabular-nums" style={{ color }}>
         {b.total}
       </span>
-      <div className="w-full mt-2">
+      <div className="w-full">
         <div className="flex h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.06)' }}>
           {wStart > 0 && <div style={{ width: `${wStart}%`, background: SEG.startability }} />}
           {wTime  > 0 && <div style={{ width: `${wTime}%`,  background: SEG.timeBoost }} />}

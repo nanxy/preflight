@@ -9,13 +9,13 @@ export default function TaskEntry({ corner = 'bottom-right', categories, onCreat
   const [formBucket, setFormBucket]   = useState(null);
   const wrapRef = useRef(null);
 
-  useEffect(() => {
-    function onClickOutside(e) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setBucketsOpen(false);
-    }
-    document.addEventListener('mousedown', onClickOutside);
-    return () => document.removeEventListener('mousedown', onClickOutside);
-  }, []);
+ useEffect(() => {
+  function onOutside(e) {
+    if (wrapRef.current && !wrapRef.current.contains(e.target)) setBucketsOpen(false);
+  }
+  document.addEventListener('pointerdown', onOutside);
+  return () => document.removeEventListener('pointerdown', onOutside);
+}, []);
 
   const corners = {
     'bottom-right': 'bottom-6 right-6',
@@ -32,8 +32,7 @@ export default function TaskEntry({ corner = 'bottom-right', categories, onCreat
       <div
         ref={wrapRef}
         className={`fixed ${corners[corner] ?? corners['bottom-right']} z-30`}
-        onMouseEnter={() => setBucketsOpen(true)}
-        onMouseLeave={() => setBucketsOpen(false)}
+ 
       >
         <div
           className={[
