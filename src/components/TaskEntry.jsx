@@ -62,9 +62,8 @@ export default function TaskEntry({ corner = 'bottom-right', categories, onCreat
       </div>
 
       <Modal open={!!formBucket} onClose={() => setFormBucket(null)}>
-        <div className="flex items-baseline justify-between mb-4">
-          <h3 className="text-lg font-semibold">New task</h3>
-          <span className="text-sm text-gray-500">{TIME_BUCKETS.find(b => b.id === formBucket)?.label}</span>
+        <div className="flex justify-end mb-2">
+          <span className="text-xs uppercase tracking-wider text-gray-400">{TIME_BUCKETS.find(b => b.id === formBucket)?.label}</span>
         </div>
         {formBucket && (
           <TaskForm

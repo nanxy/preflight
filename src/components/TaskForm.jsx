@@ -58,8 +58,8 @@ export default function TaskForm({
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter' && canSubmit) submit(); }}
-        placeholder="what is it?"
-        className="w-full px-3 py-2.5 rounded-lg border-2 border-gray-200 dark:border-gray-700 bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-priority-400 mb-4"
+        placeholder="What is it?"
+        className="w-full font-display text-2xl font-medium bg-transparent border-0 focus:outline-none focus:ring-0 px-0 mb-5 text-gray-900 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-600"
       />
 
       <Label>category</Label>

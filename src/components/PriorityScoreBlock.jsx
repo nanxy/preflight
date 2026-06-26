@@ -8,15 +8,10 @@ const SEG = {
   urgency:      '#3C3489',
 };
 
-export default function PriorityScoreBlock({ task, category, highlighted = false }) {
+export default function PriorityScoreBlock({ task, category, highlighted = false, compact = false }) {
   const b = priorityBreakdown(task, new Date(), category);
   const color = priorityColor(b.total);
   const stops = CATEGORY_COLOR_STOPS[category?.color ?? 'purple'];
-
-  const total = Math.max(1, b.startability + b.timeBoost + b.urgency);
-  const wStart = (b.startability / total) * 100;
-  const wTime  = (b.timeBoost   / total) * 100;
-  const wUrg   = (b.urgency     / total) * 100;
 
   const tip = [
     `startability ${b.startability}`,
@@ -24,6 +19,35 @@ export default function PriorityScoreBlock({ task, category, highlighted = false
     b.urgency       ? `urgency +${b.urgency}` : null,
     b.categoryBonus ? `${category?.label} bonus +${b.categoryBonus}` : null,
   ].filter(Boolean).join(' · ');
+
+  if (compact) {
+    return (
+      <div
+        title={tip}
+        className={[
+          'rounded-lg w-12 h-12 flex items-center justify-center shrink-0',
+          highlighted ? 'ring-2 ring-priority-400 scale-[1.05]' : '',
+        ].join(' ')}
+        style={{
+          background: stops[50],
+          border: `1px solid ${stops[100]}`,
+          transition: 'all 200ms ease',
+        }}
+      >
+        <span
+          className="font-display text-xl font-semibold leading-none tabular-nums"
+          style={{ color }}
+        >
+          {b.total}
+        </span>
+      </div>
+    );
+  }
+
+  const total = Math.max(1, b.startability + b.timeBoost + b.urgency);
+  const wStart = (b.startability / total) * 100;
+  const wTime  = (b.timeBoost   / total) * 100;
+  const wUrg   = (b.urgency     / total) * 100;
 
   return (
     <div
@@ -38,10 +62,7 @@ export default function PriorityScoreBlock({ task, category, highlighted = false
         transition: 'all 200ms ease',
       }}
     >
-      <span
-        className="font-display text-3xl font-semibold leading-none tabular-nums"
-        style={{ color }}
-      >
+      <span className="font-display text-3xl font-semibold leading-none tabular-nums" style={{ color }}>
         {b.total}
       </span>
       <div className="w-full mt-2">

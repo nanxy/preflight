@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+    // GitHub Pages project URL
+  base: '/preflight/',
   server: {
     port: 5173,
     // strictPort: fail loudly instead of silently jumping to 5174.
@@ -12,3 +14,5 @@ export default defineConfig({
     open: true,
   },
 });
+
+

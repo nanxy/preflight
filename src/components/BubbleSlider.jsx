@@ -5,7 +5,7 @@
 // Symbol bounds (e.g. 😩 / 🤩) flank the track for context.
 
 import { useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { haptics } from '../lib/haptics.js';
 
 export default function BubbleSlider({

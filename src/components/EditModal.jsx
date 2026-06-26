@@ -18,9 +18,8 @@ export default function EditModal({
   return (
     <>
       <Modal open={open} onClose={onClose}>
-        <div className="flex items-baseline justify-between mb-4">
-          <h3 className="text-lg font-semibold">Edit task</h3>
-          <span className="text-xs text-gray-400">{task.status}</span>
+        <div className="flex justify-end mb-2">
+          <span className="text-xs uppercase tracking-wider text-gray-400">{task.status}</span>
         </div>
         <TaskForm
           initial={task}

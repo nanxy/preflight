@@ -1,8 +1,4 @@
 // components/TaskCard.jsx
-// Layout: priority score BLOCK on the left, title + chip pills on the right.
-// Card height scales with time bucket; the score block grows to match.
-// Inactive (completed / archived) state desaturates.
-
 import { useState } from 'react';
 import { CATEGORY_COLOR_STOPS, CARD_PADDING_BY_SCALE, TIME_BUCKETS } from '../data/defaults.js';
 import PriorityScoreBlock from './PriorityScoreBlock.jsx';
@@ -17,6 +13,7 @@ export default function TaskCard({
   isFirstInToday = false,
   dragHandleProps = {},
   isDragging = false,
+  compact = false,
   onEnqueue, onDequeue, onComplete, onEdit, onArchive, onUnarchive, onStart, onRestore, onMarkCompleted,
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -34,6 +31,65 @@ export default function TaskCard({
   const stopAnd = (fn) => (e) => { e.stopPropagation(); fn?.(task.id); };
   const stopAndPass = (fn) => (e) => { e.stopPropagation(); fn?.(task); };
 
+  // Compact layout for block / grid view: square score top-left + title,
+  // then pills wrapping full-width below. Card stays clickable for expansion.
+  if (compact) {
+    return (
+      <div
+        {...dragHandleProps}
+        onClick={() => setExpanded(v => !v)}
+        style={cardStyle}
+        className={[
+          'dnd-draggable group rounded-xl border border-l-4 transition-all duration-150 no-select cursor-grab active:cursor-grabbing overflow-hidden p-2.5',
+          'border-gray-200/60 dark:border-gray-700',
+          'hover:shadow-md',
+          source !== 'today' ? 'glass' : '',
+          isDragging ? 'opacity-40 ring-2 ring-priority-400' : '',
+        ].join(' ')}
+      >
+        <div className="flex items-start gap-2 mb-2">
+          <PriorityScoreBlock
+            task={task}
+            category={category}
+            highlighted={activeSort === 'priority'}
+            compact
+          />
+          <h3
+            className="font-display text-sm font-medium leading-snug line-clamp-2 flex-1 min-w-0"
+            style={{ color: stops[800] }}
+          >
+            {task.title}
+          </h3>
+        </div>
+        <TaskChips task={task} category={category} activeSort={activeSort} compact />
+
+        {expanded && (
+          <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-gray-200/50 dark:border-gray-700/50 flex-wrap">
+            {source === 'queue' && onEnqueue && (
+              <ActionBtn onClick={stopAnd(onEnqueue)} accent stops={stops}>+ today</ActionBtn>
+            )}
+            {(source === 'completed' || source === 'archived') && onRestore && (
+              <ActionBtn onClick={stopAnd(onRestore)} accent stops={stops}>↺ restore</ActionBtn>
+            )}
+            {source === 'archived' && onMarkCompleted && (
+              <ActionBtn onClick={stopAnd(onMarkCompleted)} stops={stops}>✓ complete</ActionBtn>
+            )}
+            {source !== 'completed' && source !== 'archived' && onComplete && (
+              <ActionBtn onClick={stopAnd(onComplete)} stops={stops}>✓ done</ActionBtn>
+            )}
+            {onEdit && (
+              <ActionBtn onClick={stopAndPass(onEdit)} stops={stops}>edit</ActionBtn>
+            )}
+            {source !== 'archived' && onArchive && (
+              <ActionBtn onClick={stopAnd(onArchive)} stops={stops}>archive</ActionBtn>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Default (list / carousel) layout.
   return (
     <div
       {...dragHandleProps}
@@ -51,16 +107,12 @@ export default function TaskCard({
       ].join(' ')}
     >
       <div className={`flex items-stretch gap-3 ${padCls} pr-4 pl-2.5`}>
-        {/* Priority score block on the left, full height */}
         <PriorityScoreBlock
           task={task}
           category={category}
           highlighted={activeSort === 'priority'}
         />
-
-        {/* Title + chips on the right */}
         <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5 py-0.5">
-          {/* row 1: status badges + title */}
           <div className="flex items-center gap-2 flex-wrap">
             {isFirstInToday && (
               <span className="text-[10px] uppercase tracking-wider font-semibold text-priority-700">up next</span>
@@ -78,8 +130,6 @@ export default function TaskCard({
           >
             {task.title}
           </div>
-
-          {/* row 2: pills */}
           <TaskChips task={task} category={category} activeSort={activeSort} />
         </div>
       </div>

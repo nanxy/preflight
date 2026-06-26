@@ -2,7 +2,7 @@
 // Header navigation: shows three page labels with the current one large.
 // Tap a label to jump. Drag the row horizontally to swipe between pages.
 
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { SettingsIcon } from './Icons.jsx';
 
 const PAGES = ['archive', 'home', 'tbd'];

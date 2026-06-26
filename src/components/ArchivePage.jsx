@@ -6,12 +6,24 @@
 import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import DraggableTaskCard from './DraggableTaskCard.jsx';
-import { ListIcon, GridIcon } from './ViewIcons.jsx';
+import ViewToggle from './ViewToggle.jsx';
 
 export default function ArchivePage({ tasks, categoriesById, onRestore, onMarkCompleted, onEdit }) {
   const [view, setView] = useState('block');
   const { setNodeRef, isOver } = useDroppable({ id: 'zone-archived' });
   const empty = tasks.length === 0;
+
+  function cardProps(t) {
+    return {
+      key: t.id,
+      task: t,
+      category: categoriesById[t.categoryId],
+      source: 'archived',
+      onRestore, onMarkCompleted, onEdit,
+      onSwipeRight: () => onMarkCompleted?.(t.id),
+      onSwipeLeft:  () => onRestore?.(t.id),
+    };
+  }
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-5 pb-32">
@@ -33,57 +45,18 @@ export default function ArchivePage({ tasks, categoriesById, onRestore, onMarkCo
           </div>
         ) : view === 'block' ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {tasks.map(t => (
-              <DraggableTaskCard
-                key={t.id}
-                task={t}
-                category={categoriesById[t.categoryId]}
-                source="archived"
-                onRestore={onRestore}
-                onMarkCompleted={onMarkCompleted}
-                onEdit={onEdit}
-                compact
-              />
-            ))}
+            {tasks.map(t => <DraggableTaskCard {...cardProps(t)} compact />)}
           </div>
         ) : (
           <ul className="space-y-2">
             {tasks.map(t => (
               <li key={t.id}>
-                <DraggableTaskCard
-                  task={t}
-                  category={categoriesById[t.categoryId]}
-                  source="archived"
-                  onRestore={onRestore}
-                  onMarkCompleted={onMarkCompleted}
-                  onEdit={onEdit}
-                />
+                <DraggableTaskCard {...cardProps(t)} />
               </li>
             ))}
           </ul>
         )}
       </section>
     </main>
-  );
-}
-
-function ViewToggle({ view, onChange }) {
-  return (
-    <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <button
-        onClick={() => onChange('list')}
-        className={`p-1.5 transition-colors ${view === 'list' ? 'bg-priority-600 text-white' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-        aria-label="List view"
-      >
-        <ListIcon />
-      </button>
-      <button
-        onClick={() => onChange('block')}
-        className={`p-1.5 transition-colors ${view === 'block' ? 'bg-priority-600 text-white' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-        aria-label="Block view"
-      >
-        <GridIcon />
-      </button>
-    </div>
   );
 }
