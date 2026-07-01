@@ -81,10 +81,12 @@ export default function TodayCarousel({
             ref={scrollerRef}
             className="overflow-x-auto snap-x snap-mandatory flex gap-3 pb-2 no-scrollbar scroll-smooth"
             style={{
-              scrollPaddingLeft: '16%',
-              scrollPaddingRight: '16%',
-              paddingLeft: '16%',
-              paddingRight: '16%',
+              // Side padding = (viewport - card) / 2 so first and last cards
+              // sit perfectly centered. Card is 50vw; gap is 12px (gap-3).
+              paddingLeft:       'calc((100vw - 50vw) / 2)',
+              paddingRight:      'calc((100vw - 50vw) / 2)',
+              scrollPaddingLeft: 'calc((100vw - 50vw) / 2)',
+              scrollPaddingRight:'calc((100vw - 50vw) / 2)',
             }}
           >
             {tasks.map((task, i) => {
@@ -92,8 +94,9 @@ export default function TodayCarousel({
               return (
                 <div
                   key={task.id}
-                  className="snap-center snap-always shrink-0 w-[68%] sm:w-[58%] transition-all duration-300 ease-out"
+                  className="snap-center snap-always shrink-0 transition-all duration-300 ease-out"
                   style={{
+                    width: '50vw',
                     transform: isActive ? 'scale(1)' : 'scale(0.9)',
                     opacity: isActive ? 1 : 0.55,
                   }}

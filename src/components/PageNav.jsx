@@ -24,7 +24,15 @@ export default function PageNav({ currentPage, onPageChange, onOpenSettings, day
 
   return (
     <header className="sticky top-0 z-20 backdrop-blur bg-[var(--bg)]/85 border-b border-gray-200/60 dark:border-gray-700/60">
-      <div className="mx-auto max-w-3xl px-3 py-2 flex items-center justify-between gap-2">
+      <div className="mx-auto max-w-3xl px-3 py-2 flex items-center gap-2">
+        <button
+          onClick={onOpenSettings}
+          className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300 shrink-0"
+          aria-label="Settings"
+        >
+          <SettingsIcon />
+        </button>
+
         <motion.div
           className="flex-1 flex items-center justify-around gap-1 cursor-grab active:cursor-grabbing select-none touch-pan-y"
           drag="x"
@@ -33,7 +41,7 @@ export default function PageNav({ currentPage, onPageChange, onOpenSettings, day
           onDragEnd={handleDragEnd}
           style={{ touchAction: 'pan-y' }}
         >
-          {PAGES.map((p, i) => {
+          {PAGES.map((p) => {
             const active = p === currentPage;
             return (
               <button
@@ -51,16 +59,9 @@ export default function PageNav({ currentPage, onPageChange, onOpenSettings, day
             );
           })}
         </motion.div>
-        {currentPage === 'home' && dayLabel && (
-          <p className="text-[11px] text-gray-500 dark:text-gray-400 hidden sm:block">{dayLabel}</p>
-        )}
-        <button
-          onClick={onOpenSettings}
-          className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300 shrink-0"
-          aria-label="Settings"
-        >
-          <SettingsIcon />
-        </button>
+
+        {/* Right spacer matches settings icon width so Home stays centered */}
+        <div className="w-8 shrink-0" />
       </div>
     </header>
   );

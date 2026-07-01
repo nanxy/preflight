@@ -106,30 +106,47 @@ export default function TaskCard({
         isDragging ? 'opacity-40 ring-2 ring-priority-400' : '',
       ].join(' ')}
     >
-      <div className={`flex items-stretch gap-3 ${padCls} pr-4 pl-2.5`}>
-        <PriorityScoreBlock
-          task={task}
-          category={category}
-          highlighted={activeSort === 'priority'}
-        />
-        <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5 py-0.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            {isFirstInToday && (
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-priority-700">up next</span>
-            )}
-            {source === 'completed' && (
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">done</span>
-            )}
-            {source === 'archived' && (
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">archived</span>
-            )}
-          </div>
+      {/* Grid: col 0 = score block (auto width), col 1 = title (fills rest).
+          Row 1 = score + title. Row 2 = chips spanning both columns so they
+          always start at the score block's left edge and wrap freely. */}
+      <div
+        className={`grid ${padCls} px-3`}
+        style={{ gridTemplateColumns: 'auto 1fr', columnGap: '10px' }}
+      >
+        {/* Row 1 col 0: score block, spans both rows so it stays full-height */}
+        <div style={{ gridColumn: '1', gridRow: '1 / 3', alignSelf: 'start' }}>
+          <PriorityScoreBlock
+            task={task}
+            category={category}
+            highlighted={activeSort === 'priority'}
+          />
+        </div>
+
+        {/* Row 1 col 1: status badge + title */}
+        <div style={{ gridColumn: '2', gridRow: '1' }} className="min-w-0 flex flex-col justify-center gap-0.5 py-0.5">
+          {(isFirstInToday || source === 'completed' || source === 'archived') && (
+            <div className="flex items-center gap-2">
+              {isFirstInToday && (
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-priority-700">up next</span>
+              )}
+              {source === 'completed' && (
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">done</span>
+              )}
+              {source === 'archived' && (
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500">archived</span>
+              )}
+            </div>
+          )}
           <div
             className={`font-display text-[15px] font-medium leading-tight ${source === 'completed' ? 'line-through decoration-gray-400/60' : ''}`}
             style={{ color: stops[800] }}
           >
             {task.title}
           </div>
+        </div>
+
+        {/* Row 2 col 1: chips span col 1 only, start flush with title */}
+        <div style={{ gridColumn: '2', gridRow: '2' }} className="pb-1">
           <TaskChips task={task} category={category} activeSort={activeSort} />
         </div>
       </div>
